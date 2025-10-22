@@ -2,9 +2,9 @@
 
 
 A fully normalized and modular 
-**sStudent Portal **
+**Student Portal**
  built using 
-**Oracle SQL**
+**MySQL**
 .  
 This system manages students, faculty, departments, courses, enrollments, grades, attendance, transcripts, and fee records — ensuring academic and administrative operations are efficient, accurate, and scalable.
 
@@ -165,14 +165,14 @@ Simplifies academic history tracking for both students and administrators.
 
 ⚙️ Technical Details
 Feature	Description
-Database	Oracle 19c / 21c
+Database	MySQL 19c / 21c
 Normalization	Up to 3rd Normal Form (3NF)
 Sequences	Used for auto-increment primary keys
 Constraints	PK, FK, UNIQUE, CHECK for integrity enforcement
 View	student_grades for derived metrics and reporting
 🧰 Setup Instructions
 
-Open Oracle SQL Developer or any compatible IDE.
+Open MySQL SQL Developer or any compatible IDE.
 
 Run the SQL scripts in the following order:
 
