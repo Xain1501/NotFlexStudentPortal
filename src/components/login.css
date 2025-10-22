@@ -1,0 +1,96 @@
+body {
+  margin: 0;
+  font-family: 'Montserrat', sans-serif;
+  background: #fff;
+}
+
+/* Container with two halves */
+.login-page {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+/* LEFT SIDE (Form) */
+.login-left {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+}
+
+.login-content {
+  width: 90%;
+  max-width: 700px;
+}
+
+.navbar-title {
+  font-size: 2rem;
+  color: #4b6cb7;
+  text-align: left;
+  margin-bottom: 40px;
+}
+
+.login-form-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(115, 99, 172, 0.579);
+  padding: 70px 60px;
+  text-align: center;
+  transform: scale(1.02);
+  transform-origin: center;
+}
+
+.login-title {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: #4b6cb7;
+}
+
+.login-input {
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.login-input:focus {
+  border: 1.5px solid #7c3aed;
+
+}
+
+.gradient-btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #4b6cb7 0%, #7c3aed 100%);
+  color: white;
+  font-size: 1.3rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(80, 80, 180, 0.15);
+  transition: box-shadow 0.2s;
+}
+
+.gradient-btn:hover {
+  box-shadow: 0 8px 32px rgba(80, 80, 180, 0.25);
+}
+
+/* RIGHT SIDE (Gradient & Image) */
+.login-right {
+  flex: 1;
+  overflow:hidden;
+}
+
+.login-right img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+

@@ -1,0 +1,122 @@
+.home-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 32px;
+}
+.row.gx-4.gy-3.align-items-stretch{
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+.student-details-card, .courses-card {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid rgb(191, 188, 192);
+  box-shadow: 0 8px 24px rgba(15, 15, 185, 0.07);
+  padding: 32px 24px;
+  margin-bottom: 32px;
+  align-items: center;
+  min-width: 390px;
+}
+
+.student-details-card h3, .courses-card h3 {
+  color: #4b6cb7;
+  margin-bottom: 18px;
+  font-size: 1.3rem;
+}
+
+.courses-card table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.courses-card th, .courses-card td {
+  padding: 12px 8px;
+  text-align: left;
+  border-bottom: 1px solid #e3e6ee;
+}
+
+.courses-card th {
+  background: #f3f6fd;
+  color: #4b6cb7;
+}
+
+.gradient-btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #4b6cb7 0%, #7c3aed 100%);
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+  
+}
+
+.gradient-btn:hover {
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+} 
+.student-page {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Top Navigation Bar */
+.menu-bar {
+  background: linear-gradient(90deg, #4b6cb7 0%, #7c3aed 100%);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 1rem;
+}
+
+.menu-bar ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
+
+.menu-bar li {
+  margin: 0 20px;
+}
+
+.menu-bar a {
+  display: block;
+  padding: 15px 10px;
+  text-decoration: none;
+  color: #ecf0f1;
+  font-weight: 500;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.menu-bar a:hover {
+  background-color:  #5635b8;
+  border-radius: 8px;
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+/* Active Link Highlight (Optional if using NavLink) */
+.menu-bar a.active {
+  background-color: #1abc9c;
+  border-radius: 8px;
+  color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .menu-bar ul {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .menu-bar li {
+    margin: 10px 0;
+  }
+}
