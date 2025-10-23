@@ -1,0 +1,49 @@
+/* Basic page styling consistent with your theme */
+.marks-page .marks-header h2 {
+  color: #dfe1e6;
+  font-weight: 600;
+}
+.transcript-title.mb-0 {
+  background: linear-gradient(90deg, #4b6cb7 0%, #7c3aed 100%);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 2rem;
+}
+
+/* Card look for course list and detail */
+.card {
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(80, 80, 180, 0.06);
+}
+
+/* Make the list-group item active look nicer */
+.list-group-item.active {
+  background: linear-gradient(90deg, #4b6cb7 0%, #7c3aed 100%);
+  border-color: rgba(0,0,0,0.03);
+  color: #fff;
+}
+
+/* Slightly larger, subtler badges */
+.list-group .badge {
+  font-size: 0.8rem;
+}
+
+/* Progress bar color */
+.progress-bar {
+  background: linear-gradient(90deg, #4b6cb7 0%, #7c3aed 100%);
+}
+
+/* Make the marks list scroll if too long while keeping buttons visible (desktop detail card) */
+.marks-list {
+  max-height: 380px;
+  overflow: auto;
+}
+
+/* Small tweak: reduce accordion header padding a bit for compact mobile view */
+.accordion-button {
+  gap: 0.75rem;
+}
+
+/* responsive tweaks */
+@media (min-width: 768px) {
+  .marks-list { max-height: 420px; }
+}
