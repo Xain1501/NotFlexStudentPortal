@@ -1,10 +1,9 @@
--- Create database
-CREATE DATABASE IF NOT EXISTS student_portal;
-USE student_portal;
+-- DISABLE FOREIGN KEY CHECKS
+SET FOREIGN_KEY_CHECKS = 0;
 
 -- ==================== CORE TABLES ====================
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -14,13 +13,20 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE departments (
+CREATE TABLE IF NOT EXISTS departments (
     dept_id INT AUTO_INCREMENT PRIMARY KEY,
     dept_code VARCHAR(10) UNIQUE NOT NULL,
     dept_name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE students (
+CREATE TABLE IF NOT EXISTS courses (
+    course_id INT AUTO_INCREMENT PRIMARY KEY,
+    course_code VARCHAR(20) NOT NULL,
+    course_name VARCHAR(100) NOT NULL,
+    credits INT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS students (
     student_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNIQUE,
     student_code VARCHAR(20) UNIQUE NOT NULL,
@@ -32,12 +38,11 @@ CREATE TABLE students (
     enrollment_date DATE NOT NULL,
     major_dept_id INT,
     current_semester INT DEFAULT 1,
-    status ENUM('active', 'inactive', 'graduated') DEFAULT 'active',
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (major_dept_id) REFERENCES departments(dept_id)
+    status ENUM('active', 'inactive', 'graduated') DEFAULT 'active'
+    -- FOREIGN KEYS ADDED LATER
 );
 
-CREATE TABLE faculty (
+CREATE TABLE IF NOT EXISTS faculty (
     faculty_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNIQUE,
     faculty_code VARCHAR(20) UNIQUE NOT NULL,
@@ -46,19 +51,11 @@ CREATE TABLE faculty (
     department_id INT,
     phone VARCHAR(15),
     salary DECIMAL(10,2),
-    status ENUM('active', 'inactive', 'on_leave') DEFAULT 'active',
-    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (department_id) REFERENCES departments(dept_id)
+    status ENUM('active', 'inactive', 'on_leave') DEFAULT 'active'
+    -- FOREIGN KEYS ADDED LATER
 );
 
-CREATE TABLE courses (
-    course_id INT AUTO_INCREMENT PRIMARY KEY,
-    course_code VARCHAR(20) NOT NULL,
-    course_name VARCHAR(100) NOT NULL,
-    credits INT NOT NULL
-);
-
-CREATE TABLE course_sections (
+CREATE TABLE IF NOT EXISTS course_sections (
     section_id INT AUTO_INCREMENT PRIMARY KEY,
     course_id INT NOT NULL,
     faculty_id INT NOT NULL,
@@ -67,25 +64,23 @@ CREATE TABLE course_sections (
     year YEAR NOT NULL,
     schedule VARCHAR(100),
     room VARCHAR(50),
-    max_capacity INT DEFAULT 30,
-    FOREIGN KEY (course_id) REFERENCES courses(course_id),
-    FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id)
+    max_capacity INT DEFAULT 30
+    -- FOREIGN KEYS ADDED LATER
 );
 
 -- ==================== ACADEMIC TABLES ====================
 
-CREATE TABLE enrollments (
+CREATE TABLE IF NOT EXISTS enrollments (
     enrollment_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
     section_id INT NOT NULL,
-    enrollment_date DATE DEFAULT CURRENT_DATE,
+    enrollment_date DATE ,
     status ENUM('enrolled', 'dropped', 'completed') DEFAULT 'enrolled',
-    FOREIGN KEY (student_id) REFERENCES students(student_id),
-    FOREIGN KEY (section_id) REFERENCES course_sections(section_id),
     UNIQUE KEY unique_enrollment (student_id, section_id)
+    -- FOREIGN KEYS ADDED LATER
 );
 
-CREATE TABLE marks (
+CREATE TABLE IF NOT EXISTS marks (
     mark_id INT AUTO_INCREMENT PRIMARY KEY,
     enrollment_id INT UNIQUE NOT NULL,
     quiz_marks DECIMAL(5,2) DEFAULT 0,
@@ -99,22 +94,21 @@ CREATE TABLE marks (
     assignment2_total DECIMAL(5,2) DEFAULT 10,
     project_total DECIMAL(5,2) DEFAULT 20,
     midterm_total DECIMAL(5,2) DEFAULT 20,
-    final_total DECIMAL(5,2) DEFAULT 30,
-    FOREIGN KEY (enrollment_id) REFERENCES enrollments(enrollment_id)
+    final_total DECIMAL(5,2) DEFAULT 30
+    -- FOREIGN KEY ADDED LATER
 );
 
-CREATE TABLE attendance (
+CREATE TABLE IF NOT EXISTS attendance (
     attendance_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
     section_id INT NOT NULL,
     attendance_date DATE NOT NULL,
     status ENUM('present', 'absent') NOT NULL,
-    FOREIGN KEY (student_id) REFERENCES students(student_id),
-    FOREIGN KEY (section_id) REFERENCES course_sections(section_id),
     UNIQUE KEY unique_attendance (student_id, section_id, attendance_date)
+    -- FOREIGN KEYS ADDED LATER
 );
 
-CREATE TABLE transcript (
+CREATE TABLE IF NOT EXISTS transcript (
     transcript_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
     course_code VARCHAR(20) NOT NULL,
@@ -122,13 +116,13 @@ CREATE TABLE transcript (
     credits INT NOT NULL,
     semester VARCHAR(10) NOT NULL,
     final_grade VARCHAR(3),
-    grade_points DECIMAL(3,2),
-    FOREIGN KEY (student_id) REFERENCES students(student_id)
+    grade_points DECIMAL(3,2)
+    -- FOREIGN KEYS ADDED LATER
 );
 
 -- ==================== ADMINISTRATION TABLES ====================
 
-CREATE TABLE fee_details (
+CREATE TABLE IF NOT EXISTS fee_details (
     fee_id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
     semester VARCHAR(10) NOT NULL,
@@ -136,23 +130,57 @@ CREATE TABLE fee_details (
     amount_paid DECIMAL(10,2) DEFAULT 0.00,
     due_date DATE,
     payment_date DATE NULL,
-    status ENUM('pending', 'paid', 'overdue') DEFAULT 'pending',
-    FOREIGN KEY (student_id) REFERENCES students(student_id)
+    status ENUM('pending', 'paid', 'overdue') DEFAULT 'pending'
+    -- FOREIGN KEYS ADDED LATER
 );
 
-CREATE TABLE faculty_leaves (
+CREATE TABLE IF NOT EXISTS faculty_leaves (
     leave_id INT AUTO_INCREMENT PRIMARY KEY,
     faculty_id INT NOT NULL,
     leave_date DATE NOT NULL,
     reason TEXT,
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id)
+    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- FOREIGN KEYS ADDED LATER
 );
+
+-- ==================== ADD FOREIGN KEYS AFTER ALL TABLES EXIST ====================
+
+-- Students foreign keys
+ALTER TABLE students ADD FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE students ADD FOREIGN KEY (major_dept_id) REFERENCES departments(dept_id);
+
+-- Faculty foreign keys  
+ALTER TABLE faculty ADD FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE faculty ADD FOREIGN KEY (department_id) REFERENCES departments(dept_id);
+
+-- Course sections foreign keys
+ALTER TABLE course_sections ADD FOREIGN KEY (course_id) REFERENCES courses(course_id);
+ALTER TABLE course_sections ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id);
+
+-- Enrollments foreign keys
+ALTER TABLE enrollments ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
+ALTER TABLE enrollments ADD FOREIGN KEY (section_id) REFERENCES course_sections(section_id);
+
+-- Marks foreign keys
+ALTER TABLE marks ADD FOREIGN KEY (enrollment_id) REFERENCES enrollments(enrollment_id);
+
+-- Attendance foreign keys
+ALTER TABLE attendance ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
+ALTER TABLE attendance ADD FOREIGN KEY (section_id) REFERENCES course_sections(section_id);
+
+-- Transcript foreign keys
+ALTER TABLE transcript ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
+
+-- Fee details foreign keys
+ALTER TABLE fee_details ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
+
+-- Faculty leaves foreign keys
+ALTER TABLE faculty_leaves ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id);
 
 -- ==================== VIEW FOR CALCULATED GRADES ====================
 
-CREATE VIEW student_grades AS
+CREATE OR REPLACE VIEW student_grades AS
 SELECT 
     m.mark_id,
     m.enrollment_id,
@@ -188,10 +216,13 @@ FROM marks m;
 
 -- ==================== SAMPLE DATA ====================
 
-INSERT INTO departments (dept_code, dept_name) VALUES 
+INSERT IGNORE INTO departments (dept_code, dept_name) VALUES 
 ('CS', 'Computer Science'),
 ('SE', 'Software Engineering'),
 ('AI', 'Artificial Intelligence');
 
-INSERT INTO users (username, password_hash, email, role) VALUES 
-('admin', 'hashed_password', 'admin@university.edu', 'admin');
+INSERT IGNORE INTO users (username, password_hash, email, role) VALUES 
+('admin', 'admin123', 'admin@university.edu', 'admin');
+
+-- RE-ENABLE FOREIGN KEY CHECKS
+SET FOREIGN_KEY_CHECKS = 1;

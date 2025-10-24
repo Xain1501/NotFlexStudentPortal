@@ -1,0 +1,20 @@
+# Flask Backend Dependencies
+# Install using: pip install -r requirements.txt
+#xampp
+#mysql server 
+
+# Core Flask
+Flask==3.0.0
+flask-cors==4.0.0
+
+# Database
+
+#pymysql 
+# Security
+Werkzeug==3.0.1
+
+# Session Management
+Flask-Session==0.5.0
+
+# For development
+python-dotenv==1.0.0
