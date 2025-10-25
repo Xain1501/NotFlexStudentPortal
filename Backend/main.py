@@ -11,16 +11,16 @@ app = create_app()
 
 # Initialize database (creates tables if they don't exist)
 with app.app_context():
-    print("🔄 Initializing database...")
+    print(" Initializing database...")
     init_db()
-    print("✓ Database ready!")
+    print(" Database ready!")
 
 if __name__ == '__main__':
     print("=" * 50)
-    print("🚀 Starting Student Portal Backend Server")
+    print(" Starting Student Portal Backend Server")
     print("=" * 50)
-    print("📍 Server running at: http://localhost:5000")
-    print("📍 React frontend should run at: http://localhost:5173")
+    print(" Server running at: http://localhost:5000")
+    print("React frontend should run at: http://localhost:5173")
     print("=" * 50)
     
     # Run the Flask development server
