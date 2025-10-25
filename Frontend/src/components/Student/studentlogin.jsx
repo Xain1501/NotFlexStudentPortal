@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, Outlet } from "react-router-dom";
-import "./studentlogin.css";
+import "../Student/studentlogin.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 
