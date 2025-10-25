@@ -287,35 +287,3 @@ class CourseModel:
         except:
             return False
 
-class UserModel:
-    """
-    User authentication operations
-    """
-    
-    @staticmethod
-    def authenticate_user(username, password):
-        """
-        Authenticate user and return user data
-        Uses proper password hashing
-        """
-        query = """
-            SELECT user_id, username, email, role, password_hash
-            FROM users
-            WHERE username = %s AND is_active = 1
-        """
-        result = execute_query(query, (username,))
-        
-        if result and len(result) > 0:
-            user = result[0]
-            # TODO: Implement proper password hashing
-            # For now, using simple comparison
-            if user['password_hash'] == password:
-                return {
-                    'user_id': user['user_id'],
-                    'username': user['username'],
-                    'email': user['email'],
-                    'role': user['role']
-                }
-        
-        return None
-    
