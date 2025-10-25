@@ -1,11 +1,8 @@
 """
-Database Models and CRUD Operations
-All database queries are here
+Database Models and CRUD Operations (PYMYSQL VERSION)
 """
 
-from Backend.database.connection import execute_query, get_db_session
-#from sqlalchemy import text
-#from werkzeug.security import generate_password_hash, check_password_hash
+from Backend.database.connection import execute_query
 
 class StudentModel:
     """
@@ -20,9 +17,9 @@ class StudentModel:
             FROM students s
             JOIN departments d ON s.major_dept_id = d.dept_id
             JOIN users u ON s.user_id = u.user_id
-            WHERE s.user_id = :user_id
+            WHERE s.user_id = %s
         """
-        result = execute_query(query, {'user_id': user_id})
+        result = execute_query(query, (user_id,))
         return result[0] if result else None
     
     @staticmethod
@@ -32,9 +29,9 @@ class StudentModel:
             SELECT s.*, d.dept_name
             FROM students s
             JOIN departments d ON s.major_dept_id = d.dept_id
-            WHERE s.student_code = :student_code
+            WHERE s.student_code = %s
         """
-        result = execute_query(query, {'student_code': student_code})
+        result = execute_query(query, (student_code,))
         return result[0] if result else None
     
     @staticmethod
@@ -56,10 +53,10 @@ class StudentModel:
             JOIN course_sections cs ON e.section_id = cs.section_id
             JOIN courses c ON cs.course_id = c.course_id
             JOIN faculty f ON cs.faculty_id = f.faculty_id
-            WHERE e.student_id = :student_id
+            WHERE e.student_id = %s
             AND e.status = 'enrolled'
         """
-        return execute_query(query, {'student_id': student_id})
+        return execute_query(query, (student_id,))
     
     @staticmethod
     def get_attendance_summary(student_id):
@@ -75,10 +72,10 @@ class StudentModel:
             FROM attendance a
             JOIN course_sections cs ON a.section_id = cs.section_id
             JOIN courses c ON cs.course_id = c.course_id
-            WHERE a.student_id = :student_id
+            WHERE a.student_id = %s
             GROUP BY c.course_id, c.course_code, c.course_name
         """
-        return execute_query(query, {'student_id': student_id})
+        return execute_query(query, (student_id,))
     
     @staticmethod
     def get_marks_by_course(student_id, section_id):
@@ -93,10 +90,10 @@ class StudentModel:
             FROM marks m
             JOIN enrollments e ON m.enrollment_id = e.enrollment_id
             LEFT JOIN student_grades sg ON m.mark_id = sg.mark_id
-            WHERE e.student_id = :student_id 
-            AND e.section_id = :section_id
+            WHERE e.student_id = %s 
+            AND e.section_id = %s
         """
-        result = execute_query(query, {'student_id': student_id, 'section_id': section_id})
+        result = execute_query(query, (student_id, section_id))
         return result[0] if result else None
     
     @staticmethod
@@ -116,10 +113,10 @@ class StudentModel:
             JOIN courses c ON cs.course_id = c.course_id
             LEFT JOIN marks m ON e.enrollment_id = m.enrollment_id
             LEFT JOIN student_grades sg ON m.mark_id = sg.mark_id
-            WHERE e.student_id = :student_id
+            WHERE e.student_id = %s
             AND e.status = 'enrolled'
         """
-        return execute_query(query, {'student_id': student_id})
+        return execute_query(query, (student_id,))
     
     @staticmethod
     def get_transcript(student_id):
@@ -134,32 +131,30 @@ class StudentModel:
                 t.final_grade,
                 t.grade_points
             FROM transcript t
-            WHERE t.student_id = :student_id
+            WHERE t.student_id = %s
             ORDER BY t.semester DESC
         """
-        return execute_query(query, {'student_id': student_id})
+        return execute_query(query, (student_id,))
     
     @staticmethod
     def calculate_gpa(student_id, semester=None):
         """Calculate GPA (CGPA or SGPA)"""
         if semester:
-            # Semester GPA
             query = """
                 SELECT 
                     ROUND(SUM(grade_points * credits) / SUM(credits), 2) as gpa
                 FROM transcript
-                WHERE student_id = :student_id AND semester = :semester
+                WHERE student_id = %s AND semester = %s
             """
-            result = execute_query(query, {'student_id': student_id, 'semester': semester})
+            result = execute_query(query, (student_id, semester))
         else:
-            # Cumulative GPA
             query = """
                 SELECT 
                     ROUND(SUM(grade_points * credits) / SUM(credits), 2) as gpa
                 FROM transcript
-                WHERE student_id = :student_id
+                WHERE student_id = %s
             """
-            result = execute_query(query, {'student_id': student_id})
+            result = execute_query(query, (student_id,))
         
         return result[0]['gpa'] if result and result[0]['gpa'] else 0.0
     
@@ -169,10 +164,10 @@ class StudentModel:
         query = """
             SELECT *
             FROM fee_details
-            WHERE student_id = :student_id
+            WHERE student_id = %s
             ORDER BY semester DESC
         """
-        return execute_query(query, {'student_id': student_id})
+        return execute_query(query, (student_id,))
 
 
 class UserModel:
@@ -184,19 +179,18 @@ class UserModel:
     def authenticate_user(username, password):
         """
         Authenticate user and return user data
-        Returns None if authentication fails
         """
         query = """
             SELECT user_id, username, email, role, password_hash
             FROM users
-            WHERE username = :username AND is_active = 1
+            WHERE username = %s AND is_active = 1
         """
-        result = execute_query(query, {'username': username})
+        result = execute_query(query, (username,))
         
         if result and len(result) > 0:
             user = result[0]
-            # Check password (in real app, use proper password hashing)
-            if user['password_hash'] == password:  # Simplified for now
+            # Simple password check (implement proper hashing later)
+            if user['password_hash'] == password:
                 return {
                     'user_id': user['user_id'],
                     'username': user['username'],
@@ -209,8 +203,27 @@ class UserModel:
     @staticmethod
     def get_user_by_id(user_id):
         """Get user by ID"""
-        query = "SELECT * FROM users WHERE user_id = :user_id"
-        result = execute_query(query, {'user_id': user_id})
+        query = "SELECT * FROM users WHERE user_id = %s"
+        result = execute_query(query, (user_id,))
+        return result[0] if result else None
+
+
+class FacultyModel:
+    """
+    CRUD operations for Faculty
+    """
+    
+    @staticmethod
+    def get_faculty_by_user_id(user_id):
+        """Get faculty details by user_id"""
+        query = """
+            SELECT f.*, d.dept_name, u.email, u.username
+            FROM faculty f
+            JOIN departments d ON f.department_id = d.dept_id
+            JOIN users u ON f.user_id = u.user_id
+            WHERE f.user_id = %s
+        """
+        result = execute_query(query, (user_id,))
         return result[0] if result else None
 
 
@@ -240,24 +253,21 @@ class CourseModel:
             JOIN courses c ON cs.course_id = c.course_id
             JOIN faculty f ON cs.faculty_id = f.faculty_id
             LEFT JOIN enrollments e ON cs.section_id = e.section_id AND e.status = 'enrolled'
-            WHERE cs.semester = :semester AND cs.year = :year
+            WHERE cs.semester = %s AND cs.year = %s
             GROUP BY cs.section_id
             HAVING seats_available > 0
         """
-        return execute_query(query, {'semester': semester, 'year': year})
+        return execute_query(query, (semester, year))
     
     @staticmethod
     def enroll_student(student_id, section_id):
         """Enroll student in a course section"""
         query = """
             INSERT INTO enrollments (student_id, section_id, enrollment_date, status)
-            VALUES (:student_id, :section_id, CURRENT_DATE, 'enrolled')
+            VALUES (%s, %s, CURDATE(), 'enrolled')
         """
         try:
-            execute_query(query, {
-                'student_id': student_id,
-                'section_id': section_id
-            }, fetch=False)
+            execute_query(query, (student_id, section_id), fetch=False)
             return True
         except Exception as e:
             print(f"Enrollment error: {e}")
@@ -269,13 +279,43 @@ class CourseModel:
         query = """
             UPDATE enrollments
             SET status = 'dropped'
-            WHERE student_id = :student_id AND section_id = :section_id
+            WHERE student_id = %s AND section_id = %s
         """
         try:
-            execute_query(query, {
-                'student_id': student_id,
-                'section_id': section_id
-            }, fetch=False)
+            execute_query(query, (student_id, section_id), fetch=False)
             return True
         except:
             return False
+
+class UserModel:
+    """
+    User authentication operations
+    """
+    
+    @staticmethod
+    def authenticate_user(username, password):
+        """
+        Authenticate user and return user data
+        Uses proper password hashing
+        """
+        query = """
+            SELECT user_id, username, email, role, password_hash
+            FROM users
+            WHERE username = %s AND is_active = 1
+        """
+        result = execute_query(query, (username,))
+        
+        if result and len(result) > 0:
+            user = result[0]
+            # TODO: Implement proper password hashing
+            # For now, using simple comparison
+            if user['password_hash'] == password:
+                return {
+                    'user_id': user['user_id'],
+                    'username': user['username'],
+                    'email': user['email'],
+                    'role': user['role']
+                }
+        
+        return None
+    

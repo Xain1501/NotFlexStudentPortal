@@ -1,6 +1,6 @@
 import { useState } from "react";
-import "./login.css";
-import log from "../Assets/AXIS.png"; // your image
+import "../Student/login.css"; 
+import log from "../../assets/AXIS.png"; 
 
 export default function LoginPage({ userType = "Student" }) {
   const [form, setForm] = useState({ username: "", password: "" });

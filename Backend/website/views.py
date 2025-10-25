@@ -1,54 +1,43 @@
-#store all the urls for actual functioning of website 
-#kinda frontend aspect
-
-#this means it has bunch of routes define inside it,it act as blueprint
- #name of blueprint 
-#WHEN WE GO TO SLASH IT WILL CALL FUCNTION
-
 # ============================================
-# FILE 4: Backend/website/views.py
+# FILE 4: Backend/website/views.py (FIXED WITH JWT)
 # ============================================
 """
-Student API Routes
-All student-facing endpoints
+All API Routes - Student, Faculty, Admin
 """
 
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from Backend.website.models import StudentModel, CourseModel
-from functools import wraps
+from Backend.website.auth import token_required
 
 views = Blueprint('views', __name__)
 
-# Decorator to protect routes (require login)
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return jsonify({
-                'success': False,
-                'message': 'Authentication required'
-            }), 401
-        return f(*args, **kwargs)
-    return decorated_function
-
+# ==================== STUDENT ROUTES ====================
 
 @views.route('/api/student/dashboard', methods=['GET'])
-@login_required
-def get_dashboard():
+@token_required
+def get_student_dashboard(current_user):
     """
     Get Student Dashboard Data
-    
-    Returns:
-    - Student details
-    - Enrolled courses
-    - Attendance summary
-    - Recent announcements
     """
+    # Check if user is student
+    if current_user['role'] != 'student':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Students only'
+        }), 403
+    
     try:
-        student_id = session.get('student_id')
+        # Use current_user from JWT, NOT session
+        student_id = current_user.get('student_id')
         
         # Get student info
-        student = StudentModel.get_student_by_user_id(session['user_id'])
+        student = StudentModel.get_student_by_user_id(current_user['user_id'])
+        
+        if not student:
+            return jsonify({
+                'success': False,
+                'message': 'Student not found'
+            }), 404
         
         # Get enrolled courses
         courses = StudentModel.get_enrolled_courses(student_id)
@@ -60,14 +49,15 @@ def get_dashboard():
         for course in courses:
             att = next((a for a in attendance if a['course_code'] == course['course_code']), None)
             if att:
-                # Calculate leaves left (assuming 75% requirement, max 25% leaves)
                 total = att['total_classes']
                 present = att['present']
                 min_required = total * 0.75
                 leaves_left = int(present - min_required)
                 course['attendance_left'] = max(0, leaves_left)
+                course['attendance_percentage'] = att['attendance_percentage']
             else:
                 course['attendance_left'] = 0
+                course['attendance_percentage'] = 0
         
         return jsonify({
             'success': True,
@@ -79,14 +69,12 @@ def get_dashboard():
                     'year': f"{student['current_semester']} Semester",
                     'email': student['email'],
                     'phone': student['phone'],
-                    'dob': str(student['date_of_birth']) if student['date_of_birth'] else None,
-                    'cnic': student['cnic'],
                     'status': student['status']
                 },
                 'enrolled_courses': courses,
                 'announcements': [
-                    {'id': 1, 'message': 'Midterm exams start from next week'},
-                    {'id': 2, 'message': 'Fee payment deadline: 30th March'}
+                    {'id': 1, 'message': 'Midterm exams start from next week', 'type': 'exam'},
+                    {'id': 2, 'message': 'Fee payment deadline: 30th March', 'type': 'fee'}
                 ]
             }
         }), 200
@@ -99,15 +87,19 @@ def get_dashboard():
 
 
 @views.route('/api/student/transcript', methods=['GET'])
-@login_required
-def get_transcript():
+@token_required
+def get_student_transcript(current_user):
     """
     Get Student Transcript
-    
-    Returns complete transcript with CGPA
     """
+    if current_user['role'] != 'student':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Students only'
+        }), 403
+    
     try:
-        student_id = session.get('student_id')
+        student_id = current_user.get('student_id')
         
         # Get transcript
         transcript = StudentModel.get_transcript(student_id)
@@ -143,16 +135,19 @@ def get_transcript():
 
 
 @views.route('/api/student/marks', methods=['GET'])
-@login_required
-def get_marks():
+@token_required
+def get_student_marks(current_user):
     """
-    Get All Marks
+    Get Student Marks
+    """
+    if current_user['role'] != 'student':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Students only'
+        }), 403
     
-    Returns marks for all enrolled courses
-    """
     try:
-        student_id = session.get('student_id')
-        
+        student_id = current_user.get('student_id')
         marks = StudentModel.get_all_marks(student_id)
         
         # Format response
@@ -166,7 +161,6 @@ def get_marks():
                     'marks': []
                 }
             
-            # Add individual marks
             if mark.get('mark_id'):
                 courses_marks[code]['marks'] = [
                     {'title': 'Quiz', 'score': mark['quiz_marks'], 'outOf': mark['quiz_total']},
@@ -195,14 +189,19 @@ def get_marks():
 
 
 @views.route('/api/student/attendance', methods=['GET'])
-@login_required
-def get_attendance():
+@token_required
+def get_student_attendance(current_user):
     """
-    Get Attendance Summary
+    Get Student Attendance Summary
     """
+    if current_user['role'] != 'student':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Students only'
+        }), 403
+    
     try:
-        student_id = session.get('student_id')
-        
+        student_id = current_user.get('student_id')
         attendance = StudentModel.get_attendance_summary(student_id)
         
         return jsonify({
@@ -220,14 +219,19 @@ def get_attendance():
 
 
 @views.route('/api/student/fees', methods=['GET'])
-@login_required
-def get_fees():
+@token_required
+def get_student_fees(current_user):
     """
-    Get Fee Details
+    Get Student Fee Details
     """
+    if current_user['role'] != 'student':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Students only'
+        }), 403
+    
     try:
-        student_id = session.get('student_id')
-        
+        student_id = current_user.get('student_id')
         fees = StudentModel.get_fee_details(student_id)
         
         return jsonify({
@@ -244,13 +248,13 @@ def get_fees():
         }), 500
 
 
+# ==================== COURSE ROUTES (Shared) ====================
+
 @views.route('/api/courses/available', methods=['GET'])
-@login_required
-def get_available_courses():
+@token_required
+def get_available_courses(current_user):
     """
     Get Available Courses for Registration
-    
-    Query params: semester, year
     """
     try:
         semester = request.args.get('semester', 'Fall')
@@ -273,18 +277,19 @@ def get_available_courses():
 
 
 @views.route('/api/courses/enroll', methods=['POST'])
-@login_required
-def enroll_course():
+@token_required
+def enroll_course(current_user):
     """
-    Enroll in a Course
+    Enroll in a Course (Students only)
+    """
+    if current_user['role'] != 'student':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Students only'
+        }), 403
     
-    Request Body:
-    {
-        "section_id": 1
-    }
-    """
     try:
-        student_id = session.get('student_id')
+        student_id = current_user.get('student_id')
         data = request.get_json()
         section_id = data.get('section_id')
         
@@ -304,7 +309,7 @@ def enroll_course():
         else:
             return jsonify({
                 'success': False,
-                'message': 'Enrollment failed'
+                'message': 'Enrollment failed - course may be full'
             }), 400
             
     except Exception as e:
@@ -315,18 +320,19 @@ def enroll_course():
 
 
 @views.route('/api/courses/drop', methods=['POST'])
-@login_required
-def drop_course():
+@token_required
+def drop_course(current_user):
     """
-    Drop a Course
+    Drop a Course (Students only)
+    """
+    if current_user['role'] != 'student':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Students only'
+        }), 403
     
-    Request Body:
-    {
-        "section_id": 1
-    }
-    """
     try:
-        student_id = session.get('student_id')
+        student_id = current_user.get('student_id')
         data = request.get_json()
         section_id = data.get('section_id')
         
@@ -355,3 +361,44 @@ def drop_course():
             'message': f'Error: {str(e)}'
         }), 500
 
+
+# ==================== FACULTY ROUTES (PLACEHOLDER) ====================
+
+@views.route('/api/faculty/dashboard', methods=['GET'])
+@token_required
+def get_faculty_dashboard(current_user):
+    """
+    Get Faculty Dashboard (TODO: Implement)
+    """
+    if current_user['role'] != 'faculty':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Faculty only'
+        }), 403
+    
+    return jsonify({
+        'success': True,
+        'message': 'Faculty dashboard - To be implemented',
+        'data': {}
+    }), 200
+
+
+# ==================== ADMIN ROUTES (PLACEHOLDER) ====================
+
+@views.route('/api/admin/dashboard', methods=['GET'])
+@token_required
+def get_admin_dashboard(current_user):
+    """
+    Get Admin Dashboard (TODO: Implement)
+    """
+    if current_user['role'] != 'admin':
+        return jsonify({
+            'success': False,
+            'message': 'Access denied - Admin only'
+        }), 403
+    
+    return jsonify({
+        'success': True,
+        'message': 'Admin dashboard - To be implemented',
+        'data': {}
+    }), 200
