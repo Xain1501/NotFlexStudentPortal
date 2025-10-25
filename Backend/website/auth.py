@@ -97,6 +97,7 @@ def login():
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
             }
             
+            
             token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
             print(f"LOGIN: Token generated: {token}")
 
@@ -108,6 +109,7 @@ def login():
                 'email': user['email']
             }
             
+            
             if user['role'] == 'student':
                 student = StudentModel.get_student_by_user_id(user['user_id'])
                 if student:
@@ -117,10 +119,19 @@ def login():
             elif user['role'] == 'faculty':
                 faculty = FacultyModel.get_faculty_by_user_id(user['user_id'])
                 if faculty:
-                    user_data['faculty_id'] = faculty['faculty_id']
+                    user_data['faculty_id'] = faculty['faculty_id']  # THIS IS CRITICAL
                     user_data['name'] = f"{faculty['first_name']} {faculty['last_name']}"
             
-            print(f"LOGIN: Returning success with user: {user_data}")
+            token_payload = {
+                'user_id': user_data['user_id'],
+                'username': user_data['username'],
+                'role': user_data['role'],
+                'faculty_id': user_data.get('faculty_id'),  # ADD THIS
+                'student_id': user_data.get('student_id'),  # ADD THIS
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+            }
+            
+            token = jwt.encode(token_payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
             
             return jsonify({
                 'success': True,
@@ -128,6 +139,7 @@ def login():
                 'token': token,
                 'user': user_data
             }), 200
+        
         
         print("LOGIN: Authentication failed")
         return jsonify({

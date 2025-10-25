@@ -1,11 +1,5 @@
 #website folder --> python package
 #whatever insides it will run automatically 
-# ============================================
-# FILE 5: Backend/website/__init__.py
-# ============================================
-"""
-Flask App Initialization
-"""
 
 from flask import Flask
 from flask_cors import CORS
@@ -32,11 +26,3 @@ def create_app():
     
     return app
 
-
-# ============================================
-# FILE 6: main.py
-# ============================================
-"""
-Main Application Entry Point
-Run this file to start the server
-"""
