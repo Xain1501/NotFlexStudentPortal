@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import "./feedetail.css";
+import "../Student/feedetail.css";
 
 export default function MarksPage() {
   return (

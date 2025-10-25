@@ -3,7 +3,7 @@ import { Link, Outlet } from "react-router-dom";
 import { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-import "./marks.css";
+import "../Student/marks.css";
 
 /*
   Marks page
