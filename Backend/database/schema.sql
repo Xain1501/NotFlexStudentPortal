@@ -144,21 +144,7 @@ CREATE TABLE IF NOT EXISTS faculty_leaves (
     -- FOREIGN KEYS ADDED LATER
 );
 
-CREATE TABLE IF NOT EXISTS announcements (
-    announcement_id INT AUTO_INCREMENT PRIMARY KEY,
-    faculty_id INT NOT NULL,
-    section_id INT NOT NULL,
-    title VARCHAR(200) NOT NULL,
-    message TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-   
-);
-
 -- ==================== ADD FOREIGN KEYS AFTER ALL TABLES EXIST ====================
-
---announcements foreign keys
-ALTER TABLE announcements ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id);
-ALTER TABLE announcements ADD FOREIGN KEY (section_id) REFERENCES course_sections(section_id);
 
 -- Students foreign keys
 ALTER TABLE students ADD FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
