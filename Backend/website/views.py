@@ -6,8 +6,8 @@ All API Routes - Student, Faculty, Admin
 """
 
 from flask import Blueprint, request, jsonify
-from Backend.website.models import StudentModel, CourseModel
-from Backend.website.auth import token_required
+from website.models import StudentModel, CourseModel
+from website.auth import token_required
 
 views = Blueprint('views', __name__)
 

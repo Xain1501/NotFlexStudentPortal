@@ -2,7 +2,7 @@
 Database Models and CRUD Operations (PYMYSQL VERSION)
 """
 
-from Backend.database.connection import execute_query
+from database.connection import execute_query
 
 class StudentModel:
     """

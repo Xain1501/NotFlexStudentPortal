@@ -3,8 +3,8 @@ Main Application Entry Point
 Run this file to start the server
 """
 
-from Backend.website import create_app
-from Backend.database.connection import init_db
+from website import create_app
+from database.connection import init_db
 
 # Create Flask app
 app = create_app()
@@ -29,3 +29,6 @@ if __name__ == '__main__':
         host='0.0.0.0',  # Make server accessible from network
         port=5000        # Port number
     )
+
+
+
