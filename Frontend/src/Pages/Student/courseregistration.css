@@ -1,0 +1,83 @@
+.course-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  padding:2rem;
+}
+
+/* page wrapper */
+.course-reg-page {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
+}
+
+/* container card look */
+.reg-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 6px 20px rgba(15, 12, 41, 0.04);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+/* summary row above table */
+.reg-summary {
+  border-bottom: 1px dashed #eee;
+  padding-bottom: 0.6rem;
+}
+
+/* table */
+.course-table thead th {
+  border-bottom: 1px solid #e9e9e9;
+  font-weight: 700;
+}
+.course-table tbody td,
+.course-table tbody th {
+  border-top: 1px solid #f2f2f2;
+  vertical-align: middle;
+  padding-top: 0.6rem;
+  padding-bottom: 0.6rem;
+}
+
+/* highlight enrolled rows */
+.enrolled-row {
+  background: linear-gradient(90deg, rgba(85,99,247,0.03), rgba(140,72,255,0.01));
+  border-left: 3px solid rgba(85,99,247,0.14);
+}
+
+/* enroll button styles */
+.enroll-btn {
+  min-width: 92px;
+}
+/* primary enroll button */
+.enroll-btn.btn-primary {
+  background: linear-gradient(90deg, #5563f7, #8c48ff);
+  border: none;
+}
+/* unenroll (outline-danger) override to keep small appearance */
+.enroll-btn.btn-outline-danger {
+  border-width: 1px;
+}
+
+/* responsive tweaks */
+@media (max-width: 768px) {
+  .course-reg-page {
+    padding: 0 0.6rem;
+  }
+  .reg-summary {
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .enroll-btn {
+    min-width: 76px;
+    font-size: 0.9rem;
+  }
+}
+
+/* print-friendly */
+@media print {
+  .enroll-btn, .btn-success { display: none !important; }
+  .reg-container { box-shadow: none; border: 1px solid #ddd; }
+}

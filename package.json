@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "i": "^0.3.7",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^5.0.2",
+    "react-router-dom": "^7.9.4"
+  },
+  "devDependencies": {
+    "html2canvas": "^1.4.1"
+  }
+}
