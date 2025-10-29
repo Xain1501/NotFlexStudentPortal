@@ -1,8 +1,7 @@
-import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import "../Student/studentlogin.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
-
+import Navbar from "../../components/navbar";
 
 const studentDetails = {
   name: "Madiha Aslam",
@@ -31,33 +30,12 @@ const enrolledCourses = [
 
 export default function StudentHome() {
   return (
-    <div className="student-page">
-      {/* Top Menu */}
-      <nav className="menu-bar">
-        <ul>
-          <li>
-            <Link to="/student">Home</Link>
-          </li>
-          <li>
-            <Link to="/transcript">Transcript</Link>
-          </li>
-          <li>
-            <Link to="/marks">Marks</Link>
-          </li>
-          <li>
-            <Link to="/attendance">Attendance</Link>
-          </li>
-          <li>
-            <Link to="/timetable">Timetable</Link>
-          </li>
-          <li>
-            <Link to="/fee">Fee Detail</Link>
-          </li>
-          <li>
-            <Link to="/courses">Course Registration</Link>
-          </li>
-        </ul>
-      </nav>
+    <div className="student-page my-4">
+      
+      <div className="student-header">
+        
+        <h1 className="student-title text-center">Home</h1>
+      </div>
 
       <div className="student-content">
         <Outlet />

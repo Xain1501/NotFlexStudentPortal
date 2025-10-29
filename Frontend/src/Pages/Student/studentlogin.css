@@ -19,6 +19,13 @@
   align-items: center;
   min-width: 390px;
 }
+.student-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  padding: 2rem;
+  margin: 0;
+}
 
 .student-details-card h3, .courses-card h3 {
   color: #4b6cb7;

@@ -1,0 +1,164 @@
+.transcript-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+  padding: 2rem;
+  margin: 0;
+}
+
+/* Page wrapper */
+.transcript-page {
+  padding: 0 1rem;
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Header + thin line underneath it (the "table type" separator) */
+.transcript-header {
+  padding: 1.5rem 0 0.8rem;
+  position: relative;
+  background: transparent;
+}
+
+/* thin line below the header */
+.transcript-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;               /* thickness of the line */
+  background: #e6e6e6;       /* light gray - change to desired color */
+}
+
+/* Download button positioned top-right of the header */
+.download-btn {
+  position: absolute;
+  right: 1rem;
+  top: 1rem;
+  z-index: 20;
+}
+
+/* Optional small style for the button */
+.download-btn.btn {
+  padding: 0.45rem 0.8rem;
+  font-size: 0.95rem;
+}
+
+/* Printable area wrapper (so you can target only printable content) */
+.transcript-printable {
+  background: #fff;
+  padding: 1rem 0;
+}
+
+/* Meta row label/value layout */
+.transcript-meta {
+  padding-top: 0.8rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+
+/* Each label/value pair (ensure they stay together) */
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* label text (before the value) */
+.meta-label {
+  font-weight: 600;
+  margin-right: 6px;
+  color: #333;
+  white-space: nowrap;
+}
+
+/* value shown directly after the label */
+.meta-value {
+  font-weight: 700;
+  color: #111;
+}
+
+/* Table tweaks for clearer look */
+.table {
+  background: transparent;
+  border-collapse: collapse;
+}
+
+.table thead th {
+  border-bottom: 1px solid #e9e9e9;
+  font-weight: 700;
+  background: transparent;
+}
+
+.table tbody td,
+.table tbody th {
+  border-top: 1px solid #eee;
+  vertical-align: middle;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* Ensure table headers aren't too tall on small screens */
+.table th, .table td {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+/* Make transcript look good on narrow screens */
+@media (max-width: 768px) {
+  .transcript-page {
+    padding: 0 0.6rem;
+  }
+  .transcript-title {
+    font-size: 1.6rem;
+    padding: 1.2rem 0.5rem;
+  }
+  .download-btn {
+    right: 0.6rem;
+    top: 0.6rem;
+    padding: 0.35rem 0.6rem;
+  }
+  .transcript-meta {
+    gap: 0.6rem;
+  }
+}
+
+/* Stack meta items vertically on very small screens */
+@media (max-width: 57x) {
+  .transcript-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+  }
+  .transcript-meta .meta-item {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Print styles: hide UI elements not wanted on paper */
+@media print {
+  .download-btn {
+    display: none !important;
+  }
+  /* Tighten spacing for print */
+  .transcript-title {
+    padding: 0.5rem 0;
+    font-size: 18px;
+  }
+  .transcript-page {
+    max-width: 100%;
+    padding: 0;
+  }
+  /* Ensure borders print */
+  .table thead th, .table tbody td, .table tbody th {
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+}

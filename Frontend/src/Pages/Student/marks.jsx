@@ -62,8 +62,8 @@ export default function MarksPage() {
     <div className="marks-page  my-4">
       {/* Header */}
 
-      <div className="transcript-header rounded shadow-sm mb-4">
-        <h1 className="transcript-title mb-0">Marks</h1>
+      <div className="marks-header">
+        <h1 className="marks-title text-center">Marks</h1>
       </div>
 
       {/* Desktop / tablet layout: left = courses, right = marks */}
@@ -85,18 +85,13 @@ export default function MarksPage() {
                     onClick={() => setSelectedCode(course.code)}
                   >
                     <div>
-                      <div className="fw-bold">{course.code}</div>
+                      <div className="fw-bold text-start">{course.code}</div>
                       <small className="text-muted">{course.name}</small>
                     </div>
-                    <div className="badge bg-primary rounded-pill">
-                      {course.marks.length}
-                    </div>
+                    
                   </button>
                 ))}
               </div>
-              <small className="text-muted mt-3">
-                Tip: On small screens the list becomes an accordion.
-              </small>
             </div>
           </div>
         </div>
@@ -154,14 +149,7 @@ export default function MarksPage() {
                 })}
               </div>
 
-              <div className="mt-3">
-                <button className="btn btn-outline-primary me-2">
-                  Download Report
-                </button>
-                <button className="btn btn-primary">
-                  Request Re-evaluation
-                </button>
-              </div>
+             
             </div>
           </div>
         </div>
