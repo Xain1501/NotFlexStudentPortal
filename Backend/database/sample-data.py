@@ -5,7 +5,7 @@ Run this AFTER starting the server once (to create tables)
 Usage: python insert_sample_data.py
 """
 
-from database.connection import execute_query, get_db_session
+from Backend.database.connection import execute_query, get_db_session
 from sqlalchemy import text
 
 def insert_sample_data():
