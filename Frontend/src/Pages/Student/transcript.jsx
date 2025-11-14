@@ -130,7 +130,7 @@ export default function MarksPage() {
         <h1 className="transcript-title text-center">Transcript</h1>
       </div>
 
-      <div className="transcript-meta d-flex flex-row justify-content-between align-items-center gap-3 mb-3 flex-nowrap">
+      <div className="transcript-meta d-flex flex-row justify-content-between align-items-center gap-3 mb-3 flex-wrap">
         <div className="meta-item d-flex text-start align-items-center">
           <div className="meta-label">Semester:</div>
           <div className="meta-value">{semester} ({year})</div>
@@ -147,6 +147,7 @@ export default function MarksPage() {
         </div>
       </div>
 
+    <div className="table-responsive">
       <table className="table">
         <thead>
           <tr>
@@ -167,6 +168,7 @@ export default function MarksPage() {
           ))}
         </tbody>
       </table>
+    </div>
     </div>
   );
 }

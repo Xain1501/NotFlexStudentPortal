@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Outlet, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import "./adminlayout.css";
 
-export default function FacultyLayout() {
+export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,7 +22,7 @@ export default function FacultyLayout() {
 
   function handleLogout(e) {
     e.preventDefault();
-    // replace this with your real logout logic (call API, clear context/redux, clear cookies, etc.)
+    // Clear authentication data here (adjust to your auth)
     try {
       localStorage.removeItem("authToken");
     } catch (err) {
@@ -40,7 +40,6 @@ export default function FacultyLayout() {
         setMenuOpen(false);
       }
       if (mobileNavRef.current && !mobileNavRef.current.contains(e.target)) {
-        // allow clicks on the hamburger button itself
         if (!e.target.closest(".mobile-hamburger-btn")) {
           setMobileOpen(false);
         }
@@ -58,26 +57,32 @@ export default function FacultyLayout() {
 
   const navLinks = (
     <>
-      <NavLink to="/faculty" end className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink to="/admin" end className="nav-link" onClick={() => setMobileOpen(false)}>
         Home
       </NavLink>
-      <NavLink to="/faculty/attendance" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink to="/admin/facultyattendance" className="nav-link" onClick={() => setMobileOpen(false)}>
         Mark Attendance
       </NavLink>
-      <NavLink to="/faculty/leave" className="nav-link" onClick={() => setMobileOpen(false)}>
-        Apply Leave
+      <NavLink to="/admin/approveleave" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Approve Leave
       </NavLink>
-      <NavLink to="/faculty/marks" className="nav-link" onClick={() => setMobileOpen(false)}>
-        Student Marks
+      <NavLink to="/admin/coursemanagement" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Courses
       </NavLink>
-      <NavLink to="/faculty/timetable" className="nav-link" onClick={() => setMobileOpen(false)}>
-        Timetable
+      <NavLink to="/admin/feestructure" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Fees
+      </NavLink>
+      <NavLink to="/admin/managestudent" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Manage Students
+      </NavLink>
+      <NavLink to="/admin/managefaculty" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Manage Faculty
       </NavLink>
     </>
   );
 
   return (
-    <div className="page-wrapper d-flex flex-column min-vh-100">
+    <div className="admin-layout">
       <header className="admin-topbar d-flex align-items-center justify-content-between px-3">
         <div className="d-flex align-items-center position-relative">
           <button
@@ -91,9 +96,7 @@ export default function FacultyLayout() {
             ☰
           </button>
 
-          <Link to="/faculty" className="brand ms-1">
-            UniPortal Faculty
-          </Link>
+          <Link to="/admin" className="brand ms-1">UniPortal Admin</Link>
 
           {/* Mobile nav (shown only on small screens) */}
           <nav
@@ -119,7 +122,7 @@ export default function FacultyLayout() {
               aria-expanded={menuOpen}
               onClick={handleToggleMenu}
             >
-              Faculty
+              Admin
             </button>
 
             <ul
@@ -143,7 +146,7 @@ export default function FacultyLayout() {
         <Outlet />
       </main>
       <footer className="footer text-center py-3">
-        <small>University Portal — Faculty Module</small>
+        <small>University Portal — Admin Module</small>
       </footer>
     </div>
   );

@@ -10,10 +10,7 @@ const teacherData = {
     master: 'MS Software Engineering (XYZ University)',
     phd: 'PhD Computer Science (In progress)'
   },
-  announcements: [
-    'Department meeting on Friday 3pm in Conference Room B.',
-    'Submit midterm grades by 30th Nov.'
-  ],
+  
   courses: [
     {
       id: 'CS301-A',
@@ -37,6 +34,7 @@ const teacherData = {
       ]
     }
   ],
+  
   leaves: [],
   attendanceRecords: [],
   marksRecords: []

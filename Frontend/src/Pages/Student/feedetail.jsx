@@ -116,7 +116,7 @@ export default function FeeDetailPage() {
       // Meta row (semester, date, status)
       pdf.setFontSize(11);
       y += 8;
-      const statusText = due === 0 ? "Paid" : selected.paid === 0 ? "Unpaid" : "Partially Paid";
+      const statusText = due === 0 ? "Paid" : "Unpaid" ;
       pdf.text(`Semester: ${selected.label}`, margin, y);
       pdf.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth - margin, y, { align: "right" });
       y += 8;
@@ -248,7 +248,7 @@ export default function FeeDetailPage() {
             <ul className="list-unstyled semester-list">
               {semesters.map((s) => {
                 const sDue = s.total - s.paid;
-                const status = sDue === 0 ? "Paid" : s.paid === 0 ? "Unpaid" : "Partially Paid";
+                const status = sDue === 0 ? "Paid": "Unpaid" ;
                 return (
                   <li
                     key={s.id}

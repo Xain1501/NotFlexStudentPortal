@@ -1,0 +1,100 @@
+/* timetable.css (updated)
+   - Keeps the session-color-* variants
+   - Adds .session-selected override for selected course (slightly dark gray)
+*/
+
+/* Basic layout */
+.timetable-card .timetable-wrapper {
+  overflow: auto;
+}
+
+/* table basics */
+.timetable-table {
+  border-collapse: separate;
+  width: 100%;
+  min-width: 720px;
+}
+.timetable-table th,
+.timetable-table td {
+  border: 1px solid #e9ecef;
+  vertical-align: top;
+  padding: 6px 8px;
+}
+
+/* first column (time) */
+.time-col {
+  width: 80px;
+  background: #f8f9fa;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* day columns */
+.day-col {
+  text-align: center;
+  background: #ffffff;
+  min-width: 120px;
+}
+
+/* session cell styling */
+.session-cell {
+  cursor: pointer;
+  color: #0d1b2a;
+  padding: 6px 8px;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.session-cell .session-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.session-cell .session-meta {
+  font-size: 0.85rem;
+  color: #374151;
+}
+.session-cell .session-section {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #334155;
+}
+
+/* color variants for sessions (6 variants) */
+.session-color-1 { background: #e6f0ff; border-left: 4px solid #3b82f6; }
+.session-color-2 { background: #ffece6; border-left: 4px solid #f97316; }
+.session-color-3 { background: #f0fdf4; border-left: 4px solid #10b981; }
+.session-color-4 { background: #fff7ed; border-left: 4px solid #f59e0b; }
+.session-color-5 { background: #f8fafc; border-left: 4px solid #64748b; }
+.session-color-6 { background: #fff1f2; border-left: 4px solid #ef4444; }
+
+/* hover effect */
+.session-cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(2,6,23,0.06);
+}
+
+/* HIGHLIGHT for selected course: slightly darker gray override */
+.session-cell.session-selected {
+  background: #4a505a !important;       /* a little dark gray */
+  color: #0f172a !important;
+  border-left-color: #374151 !important; /* stronger dark left accent */
+  box-shadow: 0 6px 14px rgba(10, 15, 20, 0.08);
+}
+
+/* course filter styles */
+.course-filter .btn {
+  margin-right: 0.25rem;
+}
+.course-filter .btn.btn-dark {
+  background: #374151;
+  color: #fff;
+  border-color: #374151;
+}
+.course-filter .btn.btn-outline-secondary {
+  color: #495057;
+}
+
+/* responsive tweaks */
+@media (max-width: 768px) {
+  .time-col { width: 64px; font-size: 0.9rem; }
+  .day-col { min-width: 110px; font-size: 0.9rem; }
+  .timetable-table { min-width: 640px; }
+}
