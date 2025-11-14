@@ -1,0 +1,40 @@
+@startuml
+title Collaboration Diagram - Course Registration Process
+
+object ":Student" as student
+object ":RegistrationUI" as ui
+object ":AuthController" as auth
+object ":CourseController" as courseCtrl
+object ":EnrollmentController" as enrollCtrl
+object ":RegistrationPeriodService" as regPeriod
+object ":Database" as db
+
+student -> ui : 1: accessCourseRegistration()
+ui -> auth : 2: validateSession(token)
+auth -> db : 3: verifyToken()
+db --> auth : 4: tokenValid
+auth --> ui : 5: sessionValid
+
+ui -> regPeriod : 6: checkRegistrationPeriod()
+regPeriod -> db : 7: getActiveRegistrationPeriod()
+db --> regPeriod : 8: periodData
+regPeriod --> ui : 9: isRegistrationOpen
+
+ui -> courseCtrl : 10: getAvailableCourses(semester, year)
+courseCtrl -> db : 11: querySections(semester, year)
+db --> courseCtrl : 12: sectionsData
+courseCtrl --> ui : 13: availableSections
+
+student -> ui : 14: selectCourse(sectionId)
+ui -> enrollCtrl : 15: validateEnrollment(studentId, sectionId)
+enrollCtrl -> db : 16: checkCapacity(sectionId)
+db --> enrollCtrl : 17: capacityAvailable
+enrollCtrl -> db : 18: checkDuplicateEnrollment()
+db --> enrollCtrl : 19: noDuplicate
+
+enrollCtrl -> db : 20: createEnrollment(studentId, sectionId)
+db --> enrollCtrl : 21: enrollmentCreated
+enrollCtrl --> ui : 22: enrollmentSuccess
+ui --> student : 23: displayConfirmation()
+
+@enduml

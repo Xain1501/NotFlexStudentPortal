@@ -1,0 +1,288 @@
+@startuml
+title Student Portal System - Analysis Class Diagram
+
+' Boundary Classes (UI)
+class "<<boundary>>\nLoginPage" as LoginPage {
+  +username: String
+  +password: String
+  +displayLoginForm()
+  +submitCredentials()
+  +showError(message)
+}
+
+class "<<boundary>>\nStudentDashboard" as StudentDash {
+  +displayCourses()
+  +displayGrades()
+  +displayAttendance()
+  +displayAnnouncements()
+}
+
+class "<<boundary>>\nFacultyDashboard" as FacultyDash {
+  +displaySections()
+  +displayStudentList()
+  +showAttendanceForm()
+  +showGradeForm()
+}
+
+class "<<boundary>>\nAdminDashboard" as AdminDash {
+  +displayStatistics()
+  +showUserManagement()
+  +showReports()
+  +displaySystemLogs()
+}
+
+class "<<boundary>>\nCourseRegistrationPage" as RegPage {
+  +displayAvailableCourses()
+  +showEnrollmentStatus()
+  +confirmEnrollment()
+}
+
+class "<<boundary>>\nGradeEntryForm" as GradeForm {
+  +displayStudents()
+  +enterMarks()
+  +calculateTotal()
+  +submitGrades()
+}
+
+' Control Classes
+class "<<control>>\nAuthenticationController" as AuthCtrl {
+  +validateCredentials(username, password)
+  +createSession(user)
+  +logout()
+  +verifyToken(token)
+  +checkRole(role)
+}
+
+class "<<control>>\nEnrollmentController" as EnrollCtrl {
+  +registerCourse(studentId, sectionId)
+  +dropCourse(enrollmentId)
+  +checkCapacity(sectionId)
+  +validateRegistrationPeriod()
+  +getStudentEnrollments(studentId)
+}
+
+class "<<control>>\nAttendanceController" as AttendCtrl {
+  +markAttendance(studentId, sectionId, date, status)
+  +getAttendanceRecord(studentId, sectionId)
+  +calculateAttendancePercentage()
+  +getAbsentDates(studentId)
+}
+
+class "<<control>>\nGradeController" as GradeCtrl {
+  +enterMarks(enrollmentId, marks)
+  +calculateGrade(totalMarks)
+  +calculateGPA(studentId)
+  +generateTranscript(studentId)
+  +validateMarkRange(mark, total)
+}
+
+class "<<control>>\nCourseController" as CourseCtrl {
+  +getAvailableSections(semester, year)
+  +getCourseDetails(courseId)
+  +getSectionsByFaculty(facultyId)
+  +getEnrolledStudents(sectionId)
+}
+
+class "<<control>>\nUserManagementController" as UserMgmtCtrl {
+  +createUser(userData)
+  +updateUser(userId, data)
+  +deleteUser(userId)
+  +resetPassword(userId)
+  +activateDeactivateUser(userId)
+}
+
+class "<<control>>\nAnnouncementController" as AnnounceCtrl {
+  +createAnnouncement(facultyId, sectionId, data)
+  +getAnnouncements(sectionId)
+  +createAdminAnnouncement(data)
+  +deleteAnnouncement(announcementId)
+}
+
+' Entity Classes
+class "<<entity>>\nUser" as User {
+  -userId: Integer
+  -username: String
+  -passwordHash: String
+  -email: String
+  -role: Enum
+  -isActive: Boolean
+  -createdAt: Timestamp
+  +authenticate(password)
+  +updateEmail(email)
+  +changePassword(newPassword)
+}
+
+class "<<entity>>\nStudent" as Student {
+  -studentId: Integer
+  -studentCode: String
+  -firstName: String
+  -lastName: String
+  -dateOfBirth: Date
+  -phone: String
+  -cnic: String
+  -enrollmentDate: Date
+  -currentSemester: Integer
+  -status: Enum
+  +getFullName()
+  +updateProfile(data)
+  +calculateAge()
+}
+
+class "<<entity>>\nFaculty" as Faculty {
+  -facultyId: Integer
+  -facultyCode: String
+  -firstName: String
+  -lastName: String
+  -phone: String
+  -salary: Decimal
+  -status: Enum
+  +getFullName()
+  +updateProfile(data)
+  +applyLeave(date, reason)
+}
+
+class "<<entity>>\nCourse" as Course {
+  -courseId: Integer
+  -courseCode: String
+  -courseName: String
+  -credits: Integer
+  +getCourseDetails()
+  +validateCredits()
+}
+
+class "<<entity>>\nCourseSection" as Section {
+  -sectionId: Integer
+  -sectionCode: String
+  -semester: Enum
+  -year: Year
+  -schedule: String
+  -room: String
+  -maxCapacity: Integer
+  +isAvailable()
+  +getEnrolledCount()
+  +hasCapacity()
+}
+
+class "<<entity>>\nEnrollment" as Enrollment {
+  -enrollmentId: Integer
+  -enrollmentDate: Date
+  -status: Enum
+  +isActive()
+  +drop()
+  +complete()
+}
+
+class "<<entity>>\nMarks" as Marks {
+  -markId: Integer
+  -quizMarks: Decimal
+  -assignment1Marks: Decimal
+  -assignment2Marks: Decimal
+  -projectMarks: Decimal
+  -midtermMarks: Decimal
+  -finalMarks: Decimal
+  +calculateTotal()
+  +calculatePercentage()
+  +determineGrade()
+}
+
+class "<<entity>>\nAttendance" as Attendance {
+  -attendanceId: Integer
+  -attendanceDate: Date
+  -status: Enum
+  +isPresent()
+  +markPresent()
+  +markAbsent()
+}
+
+class "<<entity>>\nDepartment" as Department {
+  -deptId: Integer
+  -deptCode: String
+  -deptName: String
+  +getDepartmentInfo()
+}
+
+class "<<entity>>\nTranscript" as Transcript {
+  -transcriptId: Integer
+  -courseCode: String
+  -courseName: String
+  -credits: Integer
+  -semester: String
+  -finalGrade: String
+  -gradePoints: Decimal
+  +generateEntry()
+}
+
+class "<<entity>>\nFeeDetails" as Fee {
+  -feeId: Integer
+  -semester: String
+  -amountDue: Decimal
+  -amountPaid: Decimal
+  -dueDate: Date
+  -paymentDate: Date
+  -status: Enum
+  +calculateBalance()
+  +markPaid(amount, date)
+  +isOverdue()
+}
+
+class "<<entity>>\nAnnouncement" as Announcement {
+  -announcementId: Integer
+  -title: String
+  -message: Text
+  -createdAt: Timestamp
+  +getFormattedDate()
+  +getPreview(length)
+}
+
+' Relationships - Boundary to Control
+LoginPage --> AuthCtrl
+StudentDash --> EnrollCtrl
+StudentDash --> AttendCtrl
+StudentDash --> GradeCtrl
+StudentDash --> AnnounceCtrl
+FacultyDash --> AttendCtrl
+FacultyDash --> GradeCtrl
+FacultyDash --> CourseCtrl
+FacultyDash --> AnnounceCtrl
+AdminDash --> UserMgmtCtrl
+AdminDash --> CourseCtrl
+RegPage --> EnrollCtrl
+RegPage --> CourseCtrl
+GradeForm --> GradeCtrl
+
+' Control to Entity
+AuthCtrl --> User
+EnrollCtrl --> Enrollment
+EnrollCtrl --> Section
+EnrollCtrl --> Student
+AttendCtrl --> Attendance
+AttendCtrl --> Section
+AttendCtrl --> Student
+GradeCtrl --> Marks
+GradeCtrl --> Enrollment
+GradeCtrl --> Transcript
+CourseCtrl --> Course
+CourseCtrl --> Section
+UserMgmtCtrl --> User
+UserMgmtCtrl --> Student
+UserMgmtCtrl --> Faculty
+AnnounceCtrl --> Announcement
+
+' Entity to Entity
+User "1" -- "0..1" Student : has >
+User "1" -- "0..1" Faculty : has >
+Student "*" -- "1" Department : belongs to >
+Faculty "*" -- "1" Department : works in >
+Course "1" -- "*" Section : has >
+Section "*" -- "1" Faculty : taught by >
+Student "1" -- "*" Enrollment : enrolls >
+Section "1" -- "*" Enrollment : contains >
+Enrollment "1" -- "0..1" Marks : has >
+Student "1" -- "*" Attendance : records >
+Section "1" -- "*" Attendance : tracks >
+Student "1" -- "*" Transcript : generates >
+Student "1" -- "*" Fee : owes >
+Faculty "1" -- "*" Announcement : posts >
+Section "1" -- "*" Announcement : targets >
+
+@enduml

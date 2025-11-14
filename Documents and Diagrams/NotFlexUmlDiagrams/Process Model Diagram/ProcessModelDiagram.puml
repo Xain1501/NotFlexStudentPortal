@@ -1,0 +1,206 @@
+@startuml
+title Process Model Diagram - Complete Student Registration and Grading Workflow
+
+|Student|
+start
+:Open Student Portal;
+:Login with Credentials;
+
+|#AntiqueWhite|Authentication System|
+:Validate Username/Password;
+if (Credentials Valid?) then (yes)
+  :Generate JWT Token;
+  :Create User Session;
+  :Apply Role-Based Access (Student);
+else (no)
+  :Display Error Message;
+  stop
+endif
+
+|Student|
+:Access Dashboard;
+:View Available Functions;
+
+fork
+  :View Enrolled Courses;
+fork again
+  :View Grades/GPA;
+fork again
+  :View Attendance;
+fork again
+  :Check Fee Status;
+fork again
+  :Register New Courses;
+end fork
+
+:Select Course Registration;
+
+|#LightBlue|Registration System|
+:Check Registration Period;
+if (Registration Open?) then (yes)
+  :Fetch Available Course Sections;
+  
+  |Student|
+  :Browse Available Courses;
+  :Filter by Department/Semester;
+  :Select Desired Section;
+  
+  |#LightBlue|Registration System|
+  :Validate Enrollment Request;
+  
+  if (Section Has Capacity?) then (yes)
+    if (Student Not Already Enrolled?) then (yes)
+      if (No Schedule Conflict?) then (yes)
+        :Create Enrollment Record;
+        :Update Section Capacity;
+        :Send Confirmation;
+        
+        |Student|
+        :View Enrollment Confirmation;
+      else (conflict exists)
+        :Display Schedule Conflict Error;
+        |Student|
+        :Select Different Section;
+      endif
+    else (duplicate)
+      :Display Already Enrolled Error;
+      stop
+    endif
+  else (full)
+    :Display Section Full Error;
+    |Student|
+    :Select Different Section;
+  endif
+else (closed)
+  :Display Registration Closed Error;
+  stop
+endif
+
+|#LightGreen|Faculty|
+:Login to Faculty Portal;
+
+|#AntiqueWhite|Authentication System|
+:Validate Faculty Credentials;
+:Apply Role-Based Access (Faculty);
+
+|#LightGreen|Faculty|
+:Access Course Section;
+:View Enrolled Students List;
+
+fork
+  :Mark Daily Attendance;
+  
+  |#LightCyan|Attendance System|
+  :Record Attendance Status;
+  :Calculate Attendance Percentage;
+  :Flag Students with Low Attendance;
+fork again
+  |#LightGreen|Faculty|
+  :Enter Assessment Marks;
+  
+  partition "Grade Entry Process" {
+    :Enter Quiz Marks (10);
+    :Enter Assignment 1 (10);
+    :Enter Assignment 2 (10);
+    :Enter Project Marks (20);
+    :Enter Midterm Marks (20);
+    :Enter Final Exam Marks (30);
+  }
+  
+  |#LightSalmon|Grading System|
+  :Validate Mark Ranges;
+  if (All Marks Valid?) then (yes)
+    :Calculate Total (100);
+    :Calculate Percentage;
+    :Determine Letter Grade;
+    :Assign Grade Points;
+    :Save to Marks Table;
+  else (invalid)
+    :Display Validation Error;
+    |#LightGreen|Faculty|
+    :Correct Invalid Marks;
+  endif
+fork again
+  |#LightGreen|Faculty|
+  :Post Course Announcement;
+  
+  |#LightPink|Communication System|
+  :Create Announcement Record;
+  :Link to Section;
+  :Notify Enrolled Students;
+end fork
+
+|Student|
+:View Updated Attendance;
+:View Posted Grades;
+
+|#LightSalmon|Grading System|
+:Aggregate All Course Grades;
+:Calculate Semester GPA;
+
+partition "GPA Calculation" {
+  :Sum (Grade Points × Credits);
+  :Sum Total Credits;
+  :GPA = Total Points / Credits;
+  :Determine Academic Standing;
+}
+
+:Generate Transcript Entry;
+:Update Student Record;
+
+|Student|
+:View Semester Results;
+:View Cumulative GPA;
+:Download Transcript;
+
+|#Yellow|Admin System|
+:Monitor System Activity;
+:Generate Reports;
+
+fork
+  :Process Fee Payments;
+  |#Lavender|Fee Management|
+  :Update Payment Status;
+  :Calculate Balance;
+  :Generate Receipt;
+fork again
+  |#Yellow|Admin System|
+  :Review Faculty Leaves;
+  if (Leave Approved?) then (yes)
+    :Mark Faculty Unavailable;
+    :Assign Substitute;
+  else (rejected)
+    :Notify Faculty;
+  endif
+fork again
+  :Post University-wide Announcements;
+  |#LightPink|Communication System|
+  :Broadcast to All Users;
+end fork
+
+|Student|
+:Receive Notifications;
+:Complete Semester;
+
+if (End of Semester?) then (yes)
+  |#LightSalmon|Grading System|
+  :Finalize All Grades;
+  :Archive Semester Data;
+  :Prepare for Next Semester;
+  
+  |#LightBlue|Registration System|
+  :Open New Registration Period;
+  :Update Course Offerings;
+  
+  |Student|
+  :Register for Next Semester;
+  note right
+    Process repeats for
+    each academic semester
+  end note
+endif
+
+:Logout;
+stop
+
+@enduml

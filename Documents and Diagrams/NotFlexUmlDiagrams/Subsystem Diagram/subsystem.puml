@@ -1,0 +1,251 @@
+@startuml
+title Student Portal System - Subsystem Architecture
+
+package "Frontend Layer (React.js)" {
+  
+  package "Student Portal" {
+    component [Student Dashboard] as SD
+    component [Course Registration UI] as CRU
+    component [Grades View] as GV
+    component [Attendance View] as AV
+    component [Fee Management UI] as FMU
+  }
+  
+  package "Faculty Portal" {
+    component [Faculty Dashboard] as FD
+    component [Attendance Marking] as AM
+    component [Grade Entry] as GE
+    component [Section Management] as SM
+    component [Announcement Creator] as AC
+  }
+  
+  package "Admin Portal" {
+    component [Admin Dashboard] as AD
+    component [User Management] as UM
+    component [Course Management] as CM
+    component [System Reports] as SR
+    component [Fee Administration] as FA
+  }
+  
+  package "Shared Components" {
+    component [Authentication UI] as AuthUI
+    component [Navigation] as Nav
+    component [API Client (Axios)] as APIClient
+  }
+}
+
+package "Backend Layer (Flask)" {
+  
+  package "Authentication Subsystem" {
+    component [Auth Controller] as AuthC
+    component [JWT Handler] as JWT
+    component [Session Manager] as Session
+    component [RBAC Service] as RBAC
+  }
+  
+  package "Student Management Subsystem" {
+    component [Student Controller] as SC
+    component [Enrollment Service] as ES
+    component [Student Profile Service] as SPS
+  }
+  
+  package "Academic Subsystem" {
+    component [Course Controller] as CC
+    component [Section Service] as SS
+    component [Registration Period Service] as RPS
+  }
+  
+  package "Attendance Subsystem" {
+    component [Attendance Controller] as AttC
+    component [Attendance Calculator] as AttCalc
+  }
+  
+  package "Grading Subsystem" {
+    component [Grade Controller] as GC
+    component [GPA Calculator] as GPAC
+    component [Transcript Generator] as TG
+  }
+  
+  package "Faculty Management Subsystem" {
+    component [Faculty Controller] as FC
+    component [Leave Management] as LM
+    component [Faculty Attendance Service] as FAS
+  }
+  
+  package "Administration Subsystem" {
+    component [Admin Controller] as AdC
+    component [User Management Service] as UMS
+    component [Report Generator] as RG
+    component [Fee Management Service] as FMS
+  }
+  
+  package "Communication Subsystem" {
+    component [Announcement Service] as AS
+    component [Notification Handler] as NH
+  }
+  
+  package "API Layer" {
+    component [REST API Gateway] as API
+    component [Request Validator] as RV
+    component [Response Formatter] as RF
+  }
+}
+
+package "Data Layer" {
+  
+  database "MySQL Database" {
+    package "Core Tables" {
+      storage [users] as users_tbl
+      storage [students] as students_tbl
+      storage [faculty] as faculty_tbl
+      storage [departments] as dept_tbl
+    }
+    
+    package "Academic Tables" {
+      storage [courses] as courses_tbl
+      storage [course_sections] as sections_tbl
+      storage [enrollments] as enroll_tbl
+      storage [marks] as marks_tbl
+      storage [attendance] as attend_tbl
+      storage [transcript] as trans_tbl
+    }
+    
+    package "Administrative Tables" {
+      storage [fee_details] as fee_tbl
+      storage [faculty_leaves] as leaves_tbl
+      storage [announcements] as announce_tbl
+      storage [registration_periods] as reg_tbl
+      storage [faculty_attendance] as fac_attend_tbl
+      storage [admin_announcements] as admin_announce_tbl
+    }
+  }
+  
+  component [Database Access Layer] as DAL
+  component [Connection Pool] as CP
+  component [Query Builder] as QB
+}
+
+' Frontend to API connections
+SD --> APIClient
+CRU --> APIClient
+GV --> APIClient
+AV --> APIClient
+FMU --> APIClient
+FD --> APIClient
+AM --> APIClient
+GE --> APIClient
+SM --> APIClient
+AC --> APIClient
+AD --> APIClient
+UM --> APIClient
+CM --> APIClient
+SR --> APIClient
+FA --> APIClient
+AuthUI --> APIClient
+
+APIClient --> API : HTTPS/JSON
+
+' API to Controllers
+API --> AuthC
+API --> SC
+API --> CC
+API --> AttC
+API --> GC
+API --> FC
+API --> AdC
+API --> AS
+
+' Authentication flow
+AuthC --> JWT
+AuthC --> Session
+AuthC --> RBAC
+
+' Student subsystem flow
+SC --> ES
+SC --> SPS
+ES --> RPS
+
+' Academic subsystem flow
+CC --> SS
+CC --> RPS
+
+' Attendance subsystem flow
+AttC --> AttCalc
+
+' Grading subsystem flow
+GC --> GPAC
+GC --> TG
+
+' Faculty subsystem flow
+FC --> LM
+FC --> FAS
+
+' Admin subsystem flow
+AdC --> UMS
+AdC --> RG
+AdC --> FMS
+
+' Communication subsystem
+AS --> NH
+
+' Controllers to DAL
+AuthC --> DAL
+SC --> DAL
+CC --> DAL
+AttC --> DAL
+GC --> DAL
+FC --> DAL
+AdC --> DAL
+AS --> DAL
+ES --> DAL
+SPS --> DAL
+SS --> DAL
+RPS --> DAL
+AttCalc --> DAL
+GPAC --> DAL
+TG --> DAL
+LM --> DAL
+FAS --> DAL
+UMS --> DAL
+RG --> DAL
+FMS --> DAL
+
+' DAL to Database
+DAL --> CP
+DAL --> QB
+CP --> users_tbl
+CP --> students_tbl
+CP --> faculty_tbl
+CP --> dept_tbl
+CP --> courses_tbl
+CP --> sections_tbl
+CP --> enroll_tbl
+CP --> marks_tbl
+CP --> attend_tbl
+CP --> trans_tbl
+CP --> fee_tbl
+CP --> leaves_tbl
+CP --> announce_tbl
+CP --> reg_tbl
+CP --> fac_attend_tbl
+CP --> admin_announce_tbl
+
+note right of "Frontend Layer (React.js)"
+  Three separate portals with
+  isolated workflows and 
+  role-based interfaces
+end note
+
+note right of "Backend Layer (Flask)"
+  RESTful API architecture
+  with JWT authentication
+  and RBAC authorization
+end note
+
+note right of "Data Layer"
+  MySQL relational database
+  with 15+ normalized tables
+  enforcing referential integrity
+end note
+
+@enduml
