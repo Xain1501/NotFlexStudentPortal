@@ -29,6 +29,7 @@ import CourseManagement from "./Pages/Admin/coursemangement.jsx";
 import FeeStructure from "./Pages/Admin/feemanagement.jsx";
 import ManageStudent from "./Pages/Admin/managestudent.jsx";
 import ManageFaculty from "./Pages/Admin/managefaculty.jsx";
+import ManageDepartments from "./Pages/Admin/managedepartment.jsx";
 
 // If you have admin pages for student marks or admin timetable, import them here.
 // import StudentMarksAdmin from "./Pages/Admin/studentmarks.jsx";
@@ -71,6 +72,8 @@ export default function App() {
         <Route path="feestructure" element={<FeeStructure />} />
         <Route path="managestudent" element={<ManageStudent />} />
         <Route path="managefaculty" element={<ManageFaculty />} />
+        <Route path="managedepartment" element={<ManageDepartments />} />
+
         {/* Uncomment and import these when you add the pages */}
         {/* <Route path="studentmarks" element={<StudentMarksAdmin />} /> */}
         {/* <Route path="timetable" element={<TimetableAdmin />} /> */}

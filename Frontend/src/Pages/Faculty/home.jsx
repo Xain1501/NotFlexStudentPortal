@@ -3,6 +3,7 @@ import { getTeacher } from '../Faculty/api';
 import "../Faculty/styles.css";
 
 const ANNOUNCEMENTS_KEY = "globalAnnouncements";
+
 function loadGlobalAnnouncements() {
   try {
     const raw = localStorage.getItem(ANNOUNCEMENTS_KEY);
@@ -11,6 +12,7 @@ function loadGlobalAnnouncements() {
     return [];
   }
 }
+
 function saveGlobalAnnouncement(a) {
   try {
     const list = loadGlobalAnnouncements();
@@ -18,11 +20,14 @@ function saveGlobalAnnouncement(a) {
     localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(list));
     window.dispatchEvent(new Event("globalAnnouncementsUpdated"));
     try {
+      // try to trigger storage event in same window (not normally allowed), best-effort
       window.dispatchEvent(new StorageEvent("storage", {
         key: ANNOUNCEMENTS_KEY,
         newValue: JSON.stringify(list)
       }));
-    } catch (err) {}
+    } catch (err) {
+      // ignore
+    }
   } catch (e) {
     console.error("Could not save announcement", e);
   }
@@ -36,48 +41,75 @@ export default function TeacherHome() {
   const [selectedCourseCode, setSelectedCourseCode] = useState("");
   const [announcementText, setAnnouncementText] = useState("");
 
-  // History of saved announcements (objects with courseCode, section, teacherName, text, createdAt, target, author)
+  // History of saved announcements (objects with id, courseCode, section, teacherName, text, createdAt, target, author)
   const [historyAnnouncements, setHistoryAnnouncements] = useState([]);
+
+  // Delete announcement (top-level so delete button can call it)
+  function deleteAnnouncement(id) {
+    if (!id) {
+      alert("Unable to delete: announcement id missing.");
+      return;
+    }
+    if (!window.confirm("Delete this announcement? This action cannot be undone.")) return;
+
+    try {
+      const all = loadGlobalAnnouncements();
+      const remaining = all.filter(a => a.id !== id);
+      localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(remaining));
+      window.dispatchEvent(new Event("globalAnnouncementsUpdated"));
+      setHistoryAnnouncements(prev => prev.filter(a => a.id !== id));
+      alert("Announcement deleted.");
+    } catch (e) {
+      console.error("Failed to delete announcement", e);
+      alert("Failed to delete announcement.");
+    }
+  }
+
+  // helper to refresh announcements filtered for this teacher and within cutoff
+  function refreshAnnouncements(forTeacher) {
+    const t = forTeacher || teacher;
+    if (!t) {
+      setHistoryAnnouncements([]);
+      return;
+    }
+    const all = loadGlobalAnnouncements();
+    const teacherCourseCodes = new Set((t.courses || []).map(c => c.code));
+    const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000; // last 2 days
+
+    const filtered = all.filter(a =>
+      (
+        (a.target && a.target === "faculty") ||
+        (a.courseCode && teacherCourseCodes.has(a.courseCode)) ||
+        // match by stored author/teacherName OR fallback to teacher.name
+        (a.teacherName && a.teacherName === t?.name) ||
+        (a.author && a.author === t?.name)
+      ) &&
+      new Date(a.createdAt).getTime() >= cutoff
+    );
+
+    setHistoryAnnouncements(filtered);
+  }
 
   useEffect(() => {
     let mounted = true;
+
     getTeacher().then(t => {
       if (!mounted) return;
+      console.log("TEACHER OBJECT:", t); // inspect shape in console; remove when satisfied
       setTeacher(t);
+
       if (t && t.courses && t.courses.length) {
         setSelectedCourseCode(t.courses[0].code);
       }
 
-      // load and filter global announcements relevant to this teacher and limit to last 2 days
-      const all = loadGlobalAnnouncements();
-      const teacherCourseCodes = new Set((t && t.courses) ? t.courses.map(c => c.code) : []);
-      const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000; // last 2 days
-      const filtered = all.filter(a =>
-        // admin announcements targeted to faculty OR announcements targeting a course this teacher teaches OR authored by this teacher
-        ((a.target && a.target === "faculty") ||
-         (a.courseCode && teacherCourseCodes.has(a.courseCode)) ||
-         (a.teacherName && a.teacherName === t.name)) &&
-        new Date(a.createdAt).getTime() >= cutoff
-      );
-      setHistoryAnnouncements(filtered);
+      // initial load & filter
+      refreshAnnouncements(t);
+    }).catch(err => {
+      console.error("getTeacher() failed:", err);
     });
 
-    // on storage/custom event update historyAnnouncements
     function updateFromStorage() {
-      const allNow = loadGlobalAnnouncements();
-      if (!teacher) {
-        setHistoryAnnouncements([]);
-        return;
-      }
-      const teacherCourseCodes = new Set((teacher.courses || []).map(c => c.code));
-      const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000;
-      const filteredNow = allNow.filter(a =>
-        ((a.target && a.target === "faculty") ||
-         (a.courseCode && teacherCourseCodes.has(a.courseCode)) ||
-         (a.teacherName && a.teacherName === teacher.name)) &&
-        new Date(a.createdAt).getTime() >= cutoff
-      );
-      setHistoryAnnouncements(filteredNow);
+      refreshAnnouncements();
     }
 
     window.addEventListener("storage", updateFromStorage);
@@ -98,15 +130,18 @@ export default function TeacherHome() {
     const text = (announcementText || "").trim();
     if (!text) return alert("Please enter announcement text.");
 
-    const course = teacher.courses.find(c => c.code === selectedCourseCode) || {};
+    const course = (teacher.courses || []).find(c => c.code === selectedCourseCode) || {};
+    const teacherNameToSave = teacher?.name || teacher?.fullName || "Teacher";
+
     const ann = {
-      courseCode: selectedCourseCode,
+      id: Date.now().toString(),                          // unique ID
+      courseCode: selectedCourseCode || "",
       section: course.section || "",
-      teacherName: teacher.name,
+      teacherName: teacherNameToSave,
       text,
       createdAt: new Date().toISOString(),
       target: "students", // teacher announcements naturally target students of that course
-      author: teacher.name,
+      author: teacherNameToSave,
     };
 
     saveGlobalAnnouncement(ann);
@@ -117,7 +152,7 @@ export default function TeacherHome() {
     // update local teacher announcements so teacher sees the text in the legacy list
     setTeacher(prev => ({
       ...prev,
-      announcements: [text, ...(prev.announcements || [])]
+      announcements: [text, ...(prev?.announcements || [])]
     }));
 
     setAnnouncementText("");
@@ -137,11 +172,11 @@ export default function TeacherHome() {
             <div className="card-body d-flex flex-column">
               <h5 className="card-title accent">Personal Details</h5>
               <div className="card-content flex-grow-1">
-                <p><strong>Name:</strong> {teacher.name}</p>
-                <p><strong>Employee ID:</strong> {teacher.id}</p>
-                <p><strong>Department:</strong> {teacher.department}</p>
-                <p><strong>Contact:</strong> {teacher.contact}</p>
-                <p><strong>Email:</strong> {teacher.email}</p>
+                <p><strong>Name:</strong> {teacher?.name || teacher?.fullName || '-'}</p>
+                <p><strong>Employee ID:</strong> {teacher?.id || '-'}</p>
+                <p><strong>Department:</strong> {teacher?.department || '-'}</p>
+                <p><strong>Contact:</strong> {teacher?.contact || '-'}</p>
+                <p><strong>Email:</strong> {teacher?.email || '-'}</p>
               </div>
             </div>
           </div>
@@ -152,9 +187,9 @@ export default function TeacherHome() {
             <div className="card-body d-flex flex-column">
               <h5 className="card-title accent">Education</h5>
               <div className="card-content flex-grow-1">
-                <p><strong>Bachelor:</strong> {teacher.education.bachelor}</p>
-                <p><strong>Master:</strong> {teacher.education.master}</p>
-                <p><strong>PhD:</strong> {teacher.education.phd || '-'}</p>
+                <p><strong>Bachelor:</strong> {teacher?.education?.bachelor || '-'}</p>
+                <p><strong>Master:</strong> {teacher?.education?.master || '-'}</p>
+                <p><strong>PhD:</strong> {teacher?.education?.phd || '-'}</p>
               </div>
             </div>
           </div>
@@ -189,14 +224,14 @@ export default function TeacherHome() {
                       aria-label="Select course"
                       style={{ marginBottom: 8 }}
                     >
-                      {teacher.courses.map((c) => (
-                        <option key={c.id} value={c.code}>
+                      {(teacher.courses || []).map((c) => (
+                        <option key={c.id || c.code} value={c.code}>
                           {c.code} {c.section ? ` - ${c.section}` : ""}
                         </option>
                       ))}
                     </select>
 
-                    <label className="form-label" style={{ fontWeight: 600}}>Announcement</label>
+                    <label className="form-label" style={{ fontWeight: 600 }}>Announcement</label>
                     <textarea
                       value={announcementText}
                       onChange={(e) => setAnnouncementText(e.target.value)}
@@ -215,13 +250,25 @@ export default function TeacherHome() {
                 <div style={{ width: "100%", textAlign: "left" }}>
                   {historyAnnouncements.length ? (
                     <div className="announcement-list" style={{ marginBottom: 12 }}>
-                      {historyAnnouncements.map((a, i) => (
-                        <div key={i} style={{ marginBottom: 12, paddingBottom: 6, borderBottom: "1px solid #eee" }}>
+                      {historyAnnouncements.map((a) => (
+                        <div key={a.id} style={{ marginBottom: 12, paddingBottom: 6, borderBottom: "1px solid #eee", position: "relative" }}>
                           <div style={{ fontWeight: 700 }}>
-                            {a.courseCode ? `${a.courseCode}${a.section ? ` - ${a.section}` : ''} — ${a.author || a.teacherName}` : `[${a.target}] — ${a.author || a.teacherName}`}
+                            {a.courseCode
+                              ? `${a.courseCode}${a.section ? ` - ${a.section}` : ''} — ${a.author || a.teacherName || teacher?.name}`
+                              : `[${a.target}] — ${a.author || a.teacherName || teacher?.name}`}
                           </div>
                           <div style={{ fontSize: 14, marginTop: 6 }}>{a.text}</div>
                           <div style={{ fontSize: 12, color: "#666", marginTop: 6 }}>{new Date(a.createdAt).toLocaleString()}</div>
+
+                          <div style={{ position: "absolute", right: 8, top: 40 }}>
+                            <button
+                              className="btn btn-sm btn-outline-danger"
+                              onClick={() => deleteAnnouncement(a.id)}
+                              title="Delete announcement"
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -246,8 +293,8 @@ export default function TeacherHome() {
                 </tr>
               </thead>
               <tbody>
-                {teacher.courses.map(c => (
-                  <tr key={c.id}>
+                {(teacher.courses || []).map(c => (
+                  <tr key={c.id || c.code}>
                     <td>{c.code}</td>
                     <td>{c.name}</td>
                     <td>{c.section}</td>

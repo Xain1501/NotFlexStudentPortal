@@ -122,7 +122,7 @@ export default function StudentHome() {
 
               <div style={{ width: "100%", textAlign: "left" }}>
                 {announcements.length ? (
-                  <div className="announcement-list">
+                  <div className="announcement-list text-center">
                     {announcements.map((a, i) => (
                       <div key={i} style={{ marginBottom: 12, paddingBottom: 6, borderBottom: "1px solid #eee" }}>
                         <div style={{ fontWeight: 700 }}>

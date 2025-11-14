@@ -78,6 +78,9 @@ export default function AdminLayout() {
       <NavLink to="/admin/managefaculty" className="nav-link" onClick={() => setMobileOpen(false)}>
         Manage Faculty
       </NavLink>
+      <NavLink to="/admin/managedepartment" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Manage Departments
+      </NavLink>
     </>
   );
 
