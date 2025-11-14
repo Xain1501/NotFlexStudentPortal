@@ -1,77 +1,119 @@
 @startuml
-'========================================
-' NotFlex Student Portal - Use Case Diagram
-' One diagram showing all portals & shared use cases
-'========================================
+title Student Portal System - Use Case Diagram
 
-' ----------- ACTORS -----------
-actor "Student [123]" as s
-actor "Faculty / Teacher [325]" as f
-actor "Admin [241]" as a
+left to right direction
 
-' ----------- SYSTEM BOUNDARY -----------
-rectangle "NotFlex Student Portal System" {
+actor Student as S
+actor Faculty as F
+actor Admin as A
 
-    ' ----------- STUDENT PORTAL -----------
-    rectangle "Student Portal" {
-        (Enroll in Courses) as UC_Enroll
-        (View Grades) as UC_ViewGrades
-        (Track Attendance) as UC_Attendance
-        (Pay Fees) as UC_PayFees
-        (Generate Transcript) as UC_Transcript
-    }
-
-    ' ----------- FACULTY PORTAL -----------
-    rectangle "Faculty Portal" {
-        (Manage Courses) as UC_ManageCourses
-        (Record Grades) as UC_RecordGrades
-        (Track Attendance) as UC_AttendanceF
-        (Submit Leave) as UC_SubmitLeave
-    }
-
-    ' ----------- ADMIN PORTAL -----------
-    rectangle "Admin Portal" {
-        (Manage Departments) as UC_ManageDepts
-        (Manage Courses) as UC_ManageCoursesA
-        (Approve Leaves) as UC_ApproveLeaves
-        (Manage Fees) as UC_ManageFees
-    }
-
-    ' ----------- SHARED USE CASES (inside overlapping portals) -----------
-    rectangle "Shared Functionality" {
-        (Track Attendance) as UC_AttendanceShared
-    }
+rectangle "Student Portal System" {
+  
+  package "Authentication Module" {
+    usecase "Login" as UC1
+    usecase "Logout" as UC2
+    usecase "Change Password" as UC3
+  }
+  
+  package "Student Module" {
+    usecase "View Personal Profile" as UC4
+    usecase "Update Profile Info" as UC5
+    usecase "View Enrolled Courses" as UC6
+    usecase "Register for Courses" as UC7
+    usecase "Drop Course" as UC8
+    usecase "View Attendance" as UC9
+    usecase "View Grades/Marks" as UC10
+    usecase "Calculate GPA" as UC11
+    usecase "View Transcript" as UC12
+    usecase "View Fee Details" as UC13
+    usecase "View Announcements" as UC14
+  }
+  
+  package "Faculty Module" {
+    usecase "Manage Course Sections" as UC15
+    usecase "View Enrolled Students" as UC16
+    usecase "Mark Attendance" as UC17
+    usecase "Enter Grades/Marks" as UC18
+    usecase "Post Announcements" as UC19
+    usecase "Apply for Leave" as UC20
+    usecase "View Leave Status" as UC21
+    usecase "View Teaching Schedule" as UC22
+  }
+  
+  package "Admin Module" {
+    usecase "Manage Users" as UC23
+    usecase "Manage Students" as UC24
+    usecase "Manage Faculty" as UC25
+    usecase "Manage Departments" as UC26
+    usecase "Manage Courses" as UC27
+    usecase "Manage Course Sections" as UC28
+    usecase "Manage Registration Periods" as UC29
+    usecase "Manage Fee Details" as UC30
+    usecase "Approve/Reject Leave" as UC31
+    usecase "Mark Faculty Attendance" as UC32
+    usecase "Post Admin Announcements" as UC33
+    usecase "Generate Reports" as UC34
+    usecase "View System Statistics" as UC35
+  }
 }
 
-' ----------- ASSOCIATIONS -----------
+' Student relationships
+S --> UC1
+S --> UC2
+S --> UC3
+S --> UC4
+S --> UC5
+S --> UC6
+S --> UC7
+S --> UC8
+S --> UC9
+S --> UC10
+S --> UC11
+S --> UC12
+S --> UC13
+S --> UC14
 
-' Student associations
-s --> UC_Enroll
-s --> UC_ViewGrades
-s --> UC_AttendanceShared
-s --> UC_PayFees
-s --> UC_Transcript
+' Faculty relationships
+F --> UC1
+F --> UC2
+F --> UC3
+F --> UC15
+F --> UC16
+F --> UC17
+F --> UC18
+F --> UC19
+F --> UC20
+F --> UC21
+F --> UC22
 
-' Faculty associations
-f --> UC_ManageCourses
-f --> UC_RecordGrades
-f --> UC_AttendanceShared
-f --> UC_SubmitLeave
+' Admin relationships
+A --> UC1
+A --> UC2
+A --> UC3
+A --> UC23
+A --> UC24
+A --> UC25
+A --> UC26
+A --> UC27
+A --> UC28
+A --> UC29
+A --> UC30
+A --> UC31
+A --> UC32
+A --> UC33
+A --> UC34
+A --> UC35
 
-' Admin associations
-a --> UC_ManageDepts
-a --> UC_ManageCoursesA
-a --> UC_ApproveLeaves
-a --> UC_ManageFees
+' Include relationships
+UC7 ..> UC29 : <<include>>
+UC8 ..> UC29 : <<include>>
+UC11 ..> UC10 : <<include>>
+UC12 ..> UC11 : <<include>>
+UC18 ..> UC16 : <<include>>
+UC17 ..> UC16 : <<include>>
 
-' ----------- INCLUDE / EXTEND RELATIONSHIPS -----------
-
-UC_Transcript .> UC_ViewGrades : <<include>>
-UC_PayFees .> UC_Enroll : <<include>>
-UC_RecordGrades .> UC_ManageCourses : <<include>>
-UC_AttendanceF .> UC_ManageCourses : <<include>>
-UC_ManageCoursesA .> UC_ManageDepts : <<include>>
-UC_ApproveLeaves .> UC_ManageCoursesA : <<include>>
-UC_ManageFees .> UC_ManageCoursesA : <<include>>
+' Extend relationships
+UC10 ..> UC14 : <<extend>>
+UC22 ..> UC15 : <<extend>>
 
 @enduml
