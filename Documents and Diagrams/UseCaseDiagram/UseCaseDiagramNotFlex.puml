@@ -1,0 +1,77 @@
+@startuml
+'========================================
+' NotFlex Student Portal - Use Case Diagram
+' One diagram showing all portals & shared use cases
+'========================================
+
+' ----------- ACTORS -----------
+actor "Student [123]" as s
+actor "Faculty / Teacher [325]" as f
+actor "Admin [241]" as a
+
+' ----------- SYSTEM BOUNDARY -----------
+rectangle "NotFlex Student Portal System" {
+
+    ' ----------- STUDENT PORTAL -----------
+    rectangle "Student Portal" {
+        (Enroll in Courses) as UC_Enroll
+        (View Grades) as UC_ViewGrades
+        (Track Attendance) as UC_Attendance
+        (Pay Fees) as UC_PayFees
+        (Generate Transcript) as UC_Transcript
+    }
+
+    ' ----------- FACULTY PORTAL -----------
+    rectangle "Faculty Portal" {
+        (Manage Courses) as UC_ManageCourses
+        (Record Grades) as UC_RecordGrades
+        (Track Attendance) as UC_AttendanceF
+        (Submit Leave) as UC_SubmitLeave
+    }
+
+    ' ----------- ADMIN PORTAL -----------
+    rectangle "Admin Portal" {
+        (Manage Departments) as UC_ManageDepts
+        (Manage Courses) as UC_ManageCoursesA
+        (Approve Leaves) as UC_ApproveLeaves
+        (Manage Fees) as UC_ManageFees
+    }
+
+    ' ----------- SHARED USE CASES (inside overlapping portals) -----------
+    rectangle "Shared Functionality" {
+        (Track Attendance) as UC_AttendanceShared
+    }
+}
+
+' ----------- ASSOCIATIONS -----------
+
+' Student associations
+s --> UC_Enroll
+s --> UC_ViewGrades
+s --> UC_AttendanceShared
+s --> UC_PayFees
+s --> UC_Transcript
+
+' Faculty associations
+f --> UC_ManageCourses
+f --> UC_RecordGrades
+f --> UC_AttendanceShared
+f --> UC_SubmitLeave
+
+' Admin associations
+a --> UC_ManageDepts
+a --> UC_ManageCoursesA
+a --> UC_ApproveLeaves
+a --> UC_ManageFees
+
+' ----------- INCLUDE / EXTEND RELATIONSHIPS -----------
+
+UC_Transcript .> UC_ViewGrades : <<include>>
+UC_PayFees .> UC_Enroll : <<include>>
+UC_RecordGrades .> UC_ManageCourses : <<include>>
+UC_AttendanceF .> UC_ManageCourses : <<include>>
+UC_ManageCoursesA .> UC_ManageDepts : <<include>>
+UC_ApproveLeaves .> UC_ManageCoursesA : <<include>>
+UC_ManageFees .> UC_ManageCoursesA : <<include>>
+
+@enduml
