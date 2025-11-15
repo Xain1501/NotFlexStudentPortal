@@ -1,14 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import {
-  Outlet,
-  NavLink,
-  Link,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { Outlet, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import "./layout.css";
 
-export default function StudentLayout() {
+export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,6 +22,7 @@ export default function StudentLayout() {
 
   function handleLogout(e) {
     e.preventDefault();
+    // Clear authentication data here (adjust to your auth)
     try {
       localStorage.removeItem("authToken");
     } catch (err) {
@@ -62,55 +57,29 @@ export default function StudentLayout() {
 
   const navLinks = (
     <>
-      <NavLink
-        to="/"
-        end
-        className="nav-link"
-        onClick={() => setMobileOpen(false)}
-      >
+      <NavLink to="/admin" end className="nav-link" onClick={() => setMobileOpen(false)}>
         Home
       </NavLink>
-      <NavLink
-        to="/student/transcript"
-        className="nav-link"
-        onClick={() => setMobileOpen(false)}
-      >
-        Transcript
+      <NavLink to="/admin/facultyattendance" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Mark Attendance
       </NavLink>
-      <NavLink
-        to="/student/marks"
-        className="nav-link"
-        onClick={() => setMobileOpen(false)}
-      >
-        Marks
+      <NavLink to="/admin/approveleave" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Approve Leave
       </NavLink>
-      <NavLink
-        to="/student/attendance"
-        className="nav-link"
-        onClick={() => setMobileOpen(false)}
-      >
-        Attendance
+      <NavLink to="/admin/coursemanagement" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Courses
       </NavLink>
-      <NavLink
-        to="/student/feedetail"
-        className="nav-link"
-        onClick={() => setMobileOpen(false)}
-      >
-        Fee Detail
+      <NavLink to="/admin/feestructure" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Fees
       </NavLink>
-      <NavLink
-        to="/student/timetable"
-        className="nav-link"
-        onClick={() => setMobileOpen(false)}
-      >
-        Timetable
+      <NavLink to="/admin/managestudent" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Manage Students
       </NavLink>
-      <NavLink
-        to="/student/courseregistration"
-        className="nav-link"
-        onClick={() => setMobileOpen(false)}
-      >
-        Course Registration
+      <NavLink to="/admin/managefaculty" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Manage Faculty
+      </NavLink>
+      <NavLink to="/admin/managedepartment" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Manage Departments
       </NavLink>
     </>
   );
@@ -120,9 +89,7 @@ export default function StudentLayout() {
       <header className="admin-topbar d-flex align-items-center justify-content-between px-3">
         <div className="d-flex align-items-center position-relative">
           <button
-            className={`btn btn-sm btn-light d-md-none me-2 mobile-hamburger-btn ${
-              mobileOpen ? "active" : ""
-            }`}
+            className={`btn btn-sm btn-light d-md-none me-2 mobile-hamburger-btn ${mobileOpen ? "active" : ""}`}
             type="button"
             aria-label="Toggle navigation"
             aria-controls="mobile-nav"
@@ -132,17 +99,13 @@ export default function StudentLayout() {
             ☰
           </button>
 
-          <Link to="/" className="brand ms-1">
-            NotFlex
-          </Link>
+          <Link to="/admin" className="brand ms-1">NotFlex</Link>
 
           {/* Mobile nav (shown only on small screens) */}
           <nav
             id="mobile-nav"
             ref={mobileNavRef}
-            className={`student-topnav-mobile d-md-none ${
-              mobileOpen ? "open" : ""
-            }`}
+            className={`student-topnav-mobile d-md-none ${mobileOpen ? "open" : ""}`}
             aria-hidden={!mobileOpen}
           >
             {navLinks}
@@ -150,8 +113,9 @@ export default function StudentLayout() {
         </div>
 
         <div className="d-flex align-items-center">
-          {/* Desktop nav (hidden on small screens) */}
-          <nav className="d-none d-md-flex student-topnav">{navLinks}</nav>
+          <nav className="d-none d-md-flex admin-topnav">
+            {navLinks}
+          </nav>
 
           <div className="ms-3 dropdown" ref={menuRef}>
             <button
@@ -161,13 +125,11 @@ export default function StudentLayout() {
               aria-expanded={menuOpen}
               onClick={handleToggleMenu}
             >
-              Student
+              Admin
             </button>
 
             <ul
-              className={`dropdown-menu dropdown-menu-end ${
-                menuOpen ? "show" : ""
-              }`}
+              className={`dropdown-menu dropdown-menu-end ${menuOpen ? "show" : ""}`}
               style={{ minWidth: 140 }}
             >
               <li>
@@ -187,7 +149,7 @@ export default function StudentLayout() {
         <Outlet />
       </main>
       <footer className="footer text-center py-3">
-        <small>University Portal — Student Module</small>
+        <small>University Portal — Admin Module</small>
       </footer>
     </div>
   );
