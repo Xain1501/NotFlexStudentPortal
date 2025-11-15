@@ -1,6 +1,4 @@
 from flask import Blueprint, request, jsonify
-from flask_cors import cross_origin
-# from database.connection import get_db_connection  # Not needed - models handle DB
 from website.models import UserModel, StudentModel, FacultyModel
 import jwt
 import datetime
@@ -211,3 +209,29 @@ def check_auth(current_user):
             'role': current_user['role']
         }
     }), 200
+@auth.route('/api/debug/users', methods=['GET'])
+def debug_users():
+    """Debug endpoint to check all users"""
+    try:
+        query = """
+            SELECT u.user_id, u.username, u.role, u.email, 
+                   s.student_id, s.student_code, s.first_name as student_name,
+                   f.faculty_id, f.faculty_code, f.first_name as faculty_name
+            FROM users u
+            LEFT JOIN students s ON u.user_id = s.user_id
+            LEFT JOIN faculty f ON u.user_id = f.faculty_id
+            ORDER BY u.user_id
+        """
+        from database.connection import execute_query
+        users = execute_query(query)
+        
+        return jsonify({
+            'success': True,
+            'users': users
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500

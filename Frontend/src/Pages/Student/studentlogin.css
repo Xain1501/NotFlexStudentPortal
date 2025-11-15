@@ -1,3 +1,5 @@
+/* Base styles (merged from your provided CSS) */
+
 .home-container {
   display: flex;
   flex-direction: column;
@@ -17,6 +19,7 @@
   padding: 32px 24px;
   margin-bottom: 32px;
   align-items: center;
+  /* removed fixed min-width for better responsiveness on small screens (see responsive rules further below) */
   min-width: 390px;
 }
 .student-title {
@@ -59,7 +62,6 @@
   font-size: 1rem;
   cursor: pointer;
   transition: box-shadow 0.2s;
-  
 }
 
 .gradient-btn:hover {
@@ -116,7 +118,7 @@
   color: #fff;
 }
 
-/* Responsive Design */
+/* Responsive Design (existing small change for menu) */
 @media (max-width: 768px) {
   .menu-bar ul {
     flex-direction: column;
@@ -125,5 +127,109 @@
 
   .menu-bar li {
     margin: 10px 0;
+  }
+}
+
+/* =========================================================
+   Responsive enhancements for small screens (safe CSS-only)
+   - I did not change your JSX; only added/adjusted CSS to
+     improve small-screen layout and avoid overflow/wig-wag.
+   ========================================================= */
+
+/* Make the layout adapt below tablet size */
+@media (max-width: 991.98px) {
+  /* Allow cards to size naturally on narrower viewports */
+  .student-details-card,
+  .courses-card {
+    min-width: auto;      /* remove fixed min-width */
+    width: 100%;
+    padding: 20px;        /* slightly reduced padding */
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+  }
+
+  /* Reduce title padding and font size moderately */
+  .student-title {
+    font-size: 1.6rem;
+    padding: 1.25rem;
+  }
+
+  /* Reduce headings inside cards */
+  .student-details-card h3,
+  .courses-card h3 {
+    font-size: 1.15rem;
+    margin-bottom: 12px;
+  }
+
+  /* Tables: allow horizontal scroll if necessary and reduce spacing */
+  .courses-card {
+    overflow-x: auto;
+  }
+  .courses-card th,
+  .courses-card td {
+    padding: 10px 6px;
+  }
+  .gradient-btn {
+    padding: 6px 12px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Extra-small screens (phones): tighten spacing, left-align card content for predictability */
+@media (max-width: 575.98px) {
+  /* Ensure columns stack nicely and have spacing between them */
+  .row.gx-4.gy-3.align-items-stretch {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Cards full width, no minimum constraints */
+  .student-details-card,
+  .courses-card {
+    padding: 14px;
+    margin-bottom: 0.9rem;
+    border-radius: 10px;
+    min-width: 0;
+    text-align: left;   /* left-align content to avoid weird centered wrapping */
+  }
+
+  /* Make card paragraphs wrap more naturally and avoid "wig-wag" */
+  .student-details-card p,
+  .student-details-card strong {
+    display: inline;
+    line-height: 1.35;
+    word-break: break-word;
+  }
+
+  /* Reduce the title size further */
+  .student-title {
+    font-size: 1.4rem;
+    padding: 1rem 0.5rem;
+  }
+
+  /* Tighten table paddings */
+  .courses-card th,
+  .courses-card td {
+    padding: 8px 6px;
+    font-size: 0.95rem;
+  }
+
+  /* Smaller button for attendance left */
+  .gradient-btn {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+  }
+
+  /* Ensure the grid columns stack with a little gap; this complements Bootstrap stacking */
+  .col-md-4 {
+    margin-bottom: 0.9rem;
+  }
+}
+
+/* Optional: keep visual centering for larger screens while preserving left flow in small screens */
+@media (min-width: 576px) {
+  .student-details-card,
+  .courses-card {
+    text-align: center; /* keeps your original centered look on tablet+ */
   }
 }

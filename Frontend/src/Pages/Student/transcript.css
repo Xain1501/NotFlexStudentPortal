@@ -30,7 +30,7 @@
   right: 0;
   bottom: 0;
   height: 1px;               /* thickness of the line */
-  background: #e6e6e6;       /* light gray - change to desired color */
+  background: #6a1b9a;       /* light gray - change to desired color */
 }
 
 /* Download button positioned top-right of the header */
@@ -74,20 +74,21 @@
 .meta-label {
   font-weight: 600;
   margin-right: 6px;
-  color: #333;
+  color: #3f51b5;
   white-space: nowrap;
 }
 
 /* value shown directly after the label */
 .meta-value {
   font-weight: 700;
-  color: #111;
+  color: #3f51b5;
 }
 
 /* Table tweaks for clearer look */
 .table {
-  background: transparent;
+  background:#f2efef82;
   border-collapse: collapse;
+  
 }
 
 .table thead th {
@@ -128,37 +129,40 @@
     gap: 0.6rem;
   }
 }
+/* Make transcript look good on narrow screens */
+@media (max-width: 768px) {
+  .transcript-meta {
+    flex-wrap: wrap; /* important */
+    justify-content: center;
+    text-align: center;
+  }
+  .meta-item {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
 
 /* Stack meta items vertically on very small screens */
-@media (max-width: 57x) {
+@media (max-width: 576px) {
   .transcript-meta {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6rem;
+    align-items: center;
+    gap: 0.4rem;
   }
-  .transcript-meta .meta-item {
+  .meta-item {
     width: 100%;
     justify-content: space-between;
   }
 }
+  /* Make table scroll horizontally on tiny screens */
+  .table-responsive-mobile {
+    overflow-x: auto;
+    width: 100%;
+  }
 
-/* Print styles: hide UI elements not wanted on paper */
-@media print {
-  .download-btn {
-    display: none !important;
+  .table {
+    font-size: 0.85rem;
+    min-width: 450px; /* ensures table fits small screens */
   }
-  /* Tighten spacing for print */
-  .transcript-title {
-    padding: 0.5rem 0;
-    font-size: 18px;
-  }
-  .transcript-page {
-    max-width: 100%;
-    padding: 0;
-  }
-  /* Ensure borders print */
-  .table thead th, .table tbody td, .table tbody th {
-    -webkit-print-color-adjust: exact;
-    color-adjust: exact;
-  }
-}
+

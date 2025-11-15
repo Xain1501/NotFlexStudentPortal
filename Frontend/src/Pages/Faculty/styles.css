@@ -6,6 +6,12 @@
   --accent-text: #3758a6;
 }
 
+/* Very small stylesheet so the component doesn't look broken. */
+.page-title { font-weight: 600; }
+.info-card { border: 1px solid #e0e0e0; }
+.accent { color: #2b6cb0; }
+.announcement-list { margin-left: 0.6rem; }
+
 *{box-sizing:border-box}
 body{
   font-family: 'Nunito', sans-serif;
@@ -58,9 +64,81 @@ body{
   font-weight:600;
 }
 
-/* footer */
-.footer{margin-top:auto; background:transparent; color:#666}
-
 /* small helpers */
 .card .card-body h5.card-title{margin-bottom:16px}
 .list-group .list-group-item{cursor:pointer}
+
+/* ---------------------
+   Spacing fix for small screens
+   --------------------- */
+
+/* Add vertical spacing between stacked columns on small screens.
+   We target the wrapper .teacher-cards-row so change only affects this page.
+*/
+@media (max-width: 767.98px) {
+  .teacher-cards-row > [class*="col-"] {
+    margin-bottom: 1rem; /* space between stacked cards */
+  }
+
+  /* Remove extra space after the last stacked column */
+  .teacher-cards-row > [class*="col-"]:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Optional: reduce card padding slightly on very small screens */
+  .teacher-cards-row .info-card {
+    padding: 16px;
+  }
+}
+
+/* ---------------------
+   New announcement button & text alignment rules
+   (appended per request: place button bottom-center,
+    center the Announcements title, left-align announcement text)
+   No JS/HTML changes required — append these styles to the file.
+   --------------------- */
+
+/* Make the announcements card body a positioning context and give room for the button */
+.teacher-cards-row .col-md-4:last-child .card-body {
+  position: relative;
+  padding-bottom: 84px; /* room for the bottom-centered button */
+}
+
+/* Bottom-center the button (desktop/tablet) */
+.teacher-cards-row .col-md-4:last-child .btn.btn-outline-primary {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+/* Center the card title text */
+.teacher-cards-row .col-md-4:last-child .card-title {
+  text-align: center;
+  display: block;
+  margin:0 auto;
+  padding-bottom: 1rem;
+}
+
+/* Left-align announcement content and list items */
+.teacher-cards-row .col-md-4:last-child .card-content,
+.teacher-cards-row .col-md-4:last-child .announcement-list,
+.teacher-cards-row .col-md-4:last-child .announcement-list li {
+  text-align: center;
+  
+}
+
+/* Tidy the announcement list: left padding and spacing */
+.teacher-cards-row .col-md-4:last-child .announcement-list {
+  padding-left: 1rem; /* keep bullets aligned */
+  margin: 0;
+}
+.teacher-cards-row .col-md-4:last-child .announcement-list li {
+  margin-bottom: 0.5rem;
+}
+
+/* Make sure inline form (if visible) does not overlap the button */
+.teacher-cards-row .col-md-4:last-child form {
+  margin-bottom: 56px;
+}

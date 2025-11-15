@@ -1,0 +1,169 @@
+@startuml
+title Student Portal System - Network/Deployment Diagram
+
+!define ICONURL https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v2.4.0
+!include ICONURL/common.puml
+!include ICONURL/font-awesome-5/users.puml
+!include ICONURL/font-awesome-5/laptop.puml
+!include ICONURL/font-awesome-5/mobile.puml
+!include ICONURL/font-awesome-5/server.puml
+!include ICONURL/font-awesome-5/database.puml
+
+cloud "Internet" {
+  node "Client Devices" {
+    node "<<device>>\nStudent Laptop\n(Chrome/Firefox/Edge)" as StudentLaptop #lightblue
+    node "<<device>>\nFaculty Laptop\n(Chrome/Firefox/Edge)" as FacultyLaptop #lightgreen
+    node "<<device>>\nAdmin Desktop\n(Chrome/Firefox/Edge)" as AdminDesktop #lightyellow
+    node "<<device>>\nMobile Devices\n(iOS/Android)" as Mobile #lightpink
+  }
+}
+
+package "University Network" {
+  
+  node "<<Web Server>>\nApplication Server\n(Linux/Windows)" as WebServer #palegreen {
+    
+    component "<<artifact>>\nReact.js Application" as ReactApp {
+      [Student Portal UI]
+      [Faculty Portal UI]
+      [Admin Portal UI]
+      [Shared Components]
+      [Static Assets]
+    }
+    
+    artifact "Nginx/Apache\nWeb Server" as HTTPServer
+    
+    HTTPServer -down-> ReactApp
+  }
+  
+  node "<<Application Server>>\nBackend Server\n(Linux/Windows)" as AppServer #lightblue {
+    
+    component "<<artifact>>\nFlask Application" as FlaskApp {
+      [REST API Gateway]
+      [Authentication Module]
+      [Student Management]
+      [Faculty Management]
+      [Course Management]
+      [Attendance Module]
+      [Grading Module]
+      [Admin Module]
+      [JWT Service]
+    }
+    
+    artifact "Gunicorn/uWSGI\nWSGI Server" as WSGI
+    
+    WSGI -down-> FlaskApp
+  }
+  
+  node "<<Database Server>>\nMySQL Server\n(Linux/Windows)" as DBServer #coral {
+    
+    database "<<MySQL Database>>\nstudent_portal_db" as DB {
+      frame "Core Tables" {
+        [users]
+        [students]
+        [faculty]
+        [departments]
+      }
+      
+      frame "Academic Tables" {
+        [courses]
+        [course_sections]
+        [enrollments]
+        [marks]
+        [attendance]
+        [transcript]
+      }
+      
+      frame "Admin Tables" {
+        [fee_details]
+        [faculty_leaves]
+        [announcements]
+        [registration_periods]
+        [faculty_attendance]
+        [admin_announcements]
+      }
+    }
+    
+    artifact "MySQL Service" as MySQLService
+    
+    MySQLService -down-> DB
+  }
+  
+  node "<<Backup Server>>\nBackup Storage" as BackupServer #lightgray {
+    storage "Weekly Backups" as Backup1
+    storage "Daily Incremental" as Backup2
+  }
+}
+
+' Client connections to Web Server
+StudentLaptop -down-> HTTPServer : HTTPS (443)\nJSON
+FacultyLaptop -down-> HTTPServer : HTTPS (443)\nJSON
+AdminDesktop -down-> HTTPServer : HTTPS (443)\nJSON
+Mobile -down-> HTTPServer : HTTPS (443)\nJSON
+
+' Web Server to Application Server
+HTTPServer -down-> WSGI : HTTP (5000)\nREST API
+
+' Application Server to Database Server
+WSGI -down-> MySQLService : TCP (3306)\nMySQL Protocol
+
+' Backup connections
+MySQLService -right-> Backup1 : Scheduled\nBackup
+MySQLService -right-> Backup2 : Daily\nIncremental
+
+note top of StudentLaptop
+  Students access portal
+  for course registration,
+  grades, and attendance
+end note
+
+note top of FacultyLaptop
+  Faculty manage sections,
+  mark attendance, and
+  enter grades
+end note
+
+note top of AdminDesktop
+  Admin manages users,
+  courses, and generates
+  system reports
+end note
+
+note bottom of WebServer
+  Port: 80/443
+  Protocol: HTTP/HTTPS
+  Framework: React.js
+  Server: Nginx
+end note
+
+note bottom of AppServer
+  Port: 5000
+  Protocol: HTTP
+  Framework: Flask
+  Server: Gunicorn
+  API: RESTful
+end note
+
+note bottom of DBServer
+  Port: 3306
+  DBMS: MySQL 8.0+
+  Storage Engine: InnoDB
+  Character Set: UTF-8
+end note
+
+note right of BackupServer
+  Backup Schedule:
+  - Weekly Full Backup
+  - Daily Incremental
+  - 30 Days Retention
+end note
+
+legend right
+  |= Symbol |= Description |
+  | <$laptop> | Client Device |
+  | <$server> | Server Node |
+  | <$database> | Database |
+  | HTTPS | Encrypted Connection |
+  | TCP | Direct Connection |
+endlegend
+
+@enduml

@@ -69,7 +69,7 @@
 }
 
 .course-item.active {
-  background: linear-gradient(90deg, rgba(85,99,247,0.06), rgba(140,72,255,0.03));
+  background:  rgb(239, 238, 240) ;
   box-shadow: 0 8px 26px rgba(85,99,247,0.06);
   border-color: rgba(85,99,247,0.10);
 }

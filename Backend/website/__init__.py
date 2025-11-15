@@ -21,7 +21,11 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hour
     
     # Enable CORS for React frontend
-    CORS(app, supports_credentials=True, origins=['http://localhost:5173'])
+    CORS(app, 
+         supports_credentials=True, 
+         origins=['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5000', 'http://127.0.0.1:5000'],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+         allow_headers=['Content-Type', 'Authorization'])
     
     # Register blueprints
     from .auth import auth
