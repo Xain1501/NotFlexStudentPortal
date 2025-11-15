@@ -62,6 +62,7 @@ def token_required(f):
     return decorated
 
 @auth.route('/api/login', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def login():
     """
     Login for ALL users (student, faculty, admin)
@@ -89,12 +90,10 @@ def login():
     """
     try:
         data = request.get_json()
-        
-        # Validate input
-        if not data:
+        if not data or not data.get('username') or not data.get('password'):
             return jsonify({
-                'success': False,
-                'message': 'No data provided'
+                "status": "error",
+                "message": "Missing username or password"
             }), 400
             
         username = data.get('username')
