@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Outlet, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
-import "./adminlayout.css";
+import "./layout.css";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
@@ -99,7 +99,7 @@ export default function AdminLayout() {
             ☰
           </button>
 
-          <Link to="/admin" className="brand ms-1">UniPortal Admin</Link>
+          <Link to="/admin" className="brand ms-1">NotFlex</Link>
 
           {/* Mobile nav (shown only on small screens) */}
           <nav

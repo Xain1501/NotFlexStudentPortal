@@ -6,7 +6,7 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
-import "./adminlayout.css";
+import "./layout.css";
 
 export default function StudentLayout() {
   const navigate = useNavigate();
@@ -133,7 +133,7 @@ export default function StudentLayout() {
           </button>
 
           <Link to="/" className="brand ms-1">
-            UniPortal Student
+            NotFlex
           </Link>
 
           {/* Mobile nav (shown only on small screens) */}
