@@ -1,0 +1,176 @@
+@startuml
+title Homogenization Process Diagram - Student Portal System Data Integration
+
+skinparam packageStyle rectangle
+
+package "Data Sources" {
+  rectangle "Student Portal\nUser Inputs" as StudentInput #lightblue
+  rectangle "Faculty Portal\nUser Inputs" as FacultyInput #lightgreen
+  rectangle "Admin Portal\nUser Inputs" as AdminInput #lightyellow
+  rectangle "External Systems\n(Future Integration)" as ExternalSys #lightgray
+}
+
+package "Data Collection Layer" {
+  rectangle "React Forms\nValidation" as ReactForms #palegreen
+  rectangle "API Request\nInterceptor" as APIInterceptor #palegreen
+  rectangle "Input Sanitizer" as Sanitizer #palegreen
+  
+  StudentInput --> ReactForms
+  FacultyInput --> ReactForms
+  AdminInput --> ReactForms
+  ExternalSys --> APIInterceptor
+  
+  ReactForms --> Sanitizer
+  APIInterceptor --> Sanitizer
+}
+
+package "Data Transformation Layer" {
+  rectangle "Data Validator" as Validator #lightcyan
+  rectangle "Schema Mapper" as Mapper #lightcyan
+  rectangle "Type Converter" as TypeConverter #lightcyan
+  rectangle "Business Rule\nProcessor" as RuleProcessor #lightcyan
+  
+  Sanitizer --> Validator
+  Validator --> TypeConverter
+  TypeConverter --> Mapper
+  Mapper --> RuleProcessor
+}
+
+package "Homogenization Engine" {
+  rectangle "Data Normalizer\n====\n+ Convert date formats\n+ Standardize phone numbers\n+ Normalize names (Title Case)\n+ Format student/faculty codes\n+ Standardize CNIC format" as Normalizer #coral
+  
+  rectangle "Consistency Checker\n====\n+ Check referential integrity\n+ Validate foreign keys\n+ Ensure unique constraints\n+ Verify enum values" as ConsistencyChecker #coral
+  
+  rectangle "Data Enrichment\n====\n+ Generate timestamps\n+ Calculate derived fields\n+ Set default values\n+ Apply cascading updates" as Enrichment #coral
+  
+  RuleProcessor --> Normalizer
+  Normalizer --> ConsistencyChecker
+  ConsistencyChecker --> Enrichment
+}
+
+package "Integration Layer" {
+  rectangle "Transaction Manager\n====\n+ Begin transaction\n+ Validate complete data\n+ Commit or rollback\n+ Log changes" as TransactionMgr #plum
+  
+  rectangle "Conflict Resolver\n====\n+ Detect concurrent updates\n+ Apply last-write-wins\n+ Merge non-conflicting changes\n+ Notify on conflicts" as ConflictResolver #plum
+  
+  rectangle "Data Synchronizer\n====\n+ Sync enrollment data\n+ Update attendance records\n+ Propagate grade changes\n+ Maintain view consistency" as Synchronizer #plum
+  
+  Enrichment --> TransactionMgr
+  TransactionMgr --> ConflictResolver
+  ConflictResolver --> Synchronizer
+}
+
+database "Unified Data Store\n(MySQL Database)" as Database #orange {
+  folder "Normalized Schema" {
+    storage "Core Tables" as CoreTables
+    storage "Academic Tables" as AcademicTables
+    storage "Administrative Tables" as AdminTables
+  }
+  
+  folder "Computed Views" {
+    storage "student_grades View" as GradesView
+    storage "Attendance Summary" as AttendanceView
+    storage "GPA Calculations" as GPAView
+  }
+  
+  folder "Data Integrity" {
+    storage "Foreign Key Constraints" as FKConstraints
+    storage "Check Constraints" as CheckConstraints
+    storage "Triggers" as Triggers
+  }
+}
+
+Synchronizer --> CoreTables
+Synchronizer --> AcademicTables
+Synchronizer --> AdminTables
+
+CoreTables --> GradesView : Auto-compute
+AcademicTables --> GradesView
+AcademicTables --> AttendanceView
+GradesView --> GPAView
+
+package "Data Access Layer" {
+  rectangle "Query Optimizer" as QueryOpt #lightsteelblue
+  rectangle "Cache Manager" as CacheMgr #lightsteelblue
+  rectangle "Connection Pool" as ConnPool #lightsteelblue
+  
+  Database --> ConnPool
+  ConnPool --> CacheMgr
+  CacheMgr --> QueryOpt
+}
+
+package "Data Distribution Layer" {
+  rectangle "Response Formatter" as Formatter #lightsalmon
+  rectangle "Data Filter\n(Role-Based)" as Filter #lightsalmon
+  rectangle "Pagination Handler" as Pagination #lightsalmon
+  
+  QueryOpt --> Filter
+  Filter --> Pagination
+  Pagination --> Formatter
+}
+
+package "Output Channels" {
+  rectangle "Student Portal API\nEndpoints" as StudentAPI #lightblue
+  rectangle "Faculty Portal API\nEndpoints" as FacultyAPI #lightgreen
+  rectangle "Admin Portal API\nEndpoints" as AdminAPI #lightyellow
+  rectangle "Report Generator" as Reports #pink
+  
+  Formatter --> StudentAPI
+  Formatter --> FacultyAPI
+  Formatter --> AdminAPI
+  Formatter --> Reports
+}
+
+note right of ReactForms
+  **Step 1: Collect**
+  - Gather data from all portals
+  - Perform client-side validation
+  - Sanitize inputs for security
+end note
+
+note right of Validator
+  **Step 2: Transform**
+  - Validate against schemas
+  - Convert data types
+  - Apply business rules
+end note
+
+note right of Normalizer
+  **Step 3: Homogenize**
+  - Normalize to standard format
+  - Ensure consistency
+  - Enrich with calculated fields
+end note
+
+note right of TransactionMgr
+  **Step 4: Integrate**
+  - Manage transactions
+  - Resolve conflicts
+  - Synchronize across tables
+end note
+
+note right of Database
+  **Step 5: Store**
+  - Persist in normalized schema
+  - Maintain referential integrity
+  - Auto-compute derived values
+end note
+
+note right of Formatter
+  **Step 6: Distribute**
+  - Apply role-based filtering
+  - Format for consumption
+  - Optimize delivery
+end note
+
+legend bottom
+  **Homogenization Principles:**
+  1. **Single Source of Truth**: All data stored in unified schema
+  2. **Consistent Format**: Standardized across all portals
+  3. **Real-time Sync**: Immediate propagation of changes
+  4. **Data Integrity**: Enforced through constraints and triggers
+  5. **Role-based Access**: Filtered views based on user role
+  6. **Audit Trail**: All changes logged with timestamps
+endlegend
+
+@enduml
