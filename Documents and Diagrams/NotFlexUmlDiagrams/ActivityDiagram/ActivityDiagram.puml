@@ -1,0 +1,146 @@
+@startuml
+!theme plain
+
+title Student Portal System - Comprehensive Workflow
+
+|#LightBlue|Student|
+|#LightGreen|Faculty|
+|#LightSalmon|Admin|
+|#White|System|
+
+start
+
+|Student|
+:Login to Portal;
+
+|Faculty|
+:Login to Portal;
+
+|Admin|
+:Login to Portal;
+
+|System|
+:Authenticate User;
+:Load Role-Based Dashboard;
+
+' ==================== STUDENT PROCESSES ====================
+
+|Student|
+if (View Academic Info?) then (yes)
+  :View Courses/Grades;
+  :Check Attendance;
+  :View Transcript;
+else (no)
+  if (View Fees?) then (yes)
+    :Check Fee Status;
+    :View Payment History;
+  else (no)
+    if (Course Registration?) then (yes)
+      :Browse Available Courses;
+      :Select Courses;
+      |System|
+      :Validate Registration Period;
+      if (Registration Active?) then (yes)
+        :Check Seat Availability;
+        if (Seats Available?) then (yes)
+          :Enroll Student;
+          :Update Records;
+          |Student|
+          :Registration Confirmed;
+        else (no)
+          |Student|
+          :Course Full Message;
+        endif
+      else (no)
+        |Student|
+        :Registration Closed Message;
+      endif
+    else (no)
+      :View Announcements;
+    endif
+  endif
+endif
+
+' ==================== FACULTY PROCESSES ====================
+
+|Faculty|
+if (Mark Attendance?) then (yes)
+  :Select Teaching Section;
+  :View Student List;
+  :Mark Present/Absent;
+  |System|
+  :Record Attendance;
+  :Calculate Percentages;
+else (no)
+  if (Enter Grades?) then (yes)
+    :Select Section;
+    :Choose Student;
+    :Enter Marks;
+    |System|
+    :Validate Marks;
+    :Calculate Totals;
+    :Determine Grade;
+    :Update Transcript;
+  else (no)
+    if (Manage Courses?) then (yes)
+      :Post Announcements;
+      :View Teaching Schedule;
+    else (no)
+      if (Leave Management?) then (yes)
+        :Apply for Leave;
+        :Check Leave Status;
+      endif
+    endif
+  endif
+endif
+
+' ==================== ADMIN PROCESSES ====================
+
+|Admin|
+if (User Management?) then (yes)
+  :Create/Edit Users;
+  :Manage Students/Faculty;
+else (no)
+  if (Academic Management?) then (yes)
+    :Manage Courses/Sections;
+    :Set Registration Periods;
+  else (no)
+    if (Attendance Management?) then (yes)
+      :Mark Faculty Attendance;
+      :View Reports;
+    else (no)
+      if (Fee Management?) then (yes)
+        :Manage Fee Records;
+        :Update Payment Status;
+      else (no)
+        if (Leave Management?) then (yes)
+          :Review Leave Requests;
+          :Approve/Reject Leaves;
+        else (no)
+          if (System Management?) then (yes)
+            :Post Announcements;
+            :Generate Reports;
+            :View Statistics;
+          endif
+        endif
+      endif
+    endif
+  endif
+endif
+
+|System|
+:Log User Activities;
+:Update System Logs;
+
+|Student|
+:Logout;
+
+|Faculty|
+:Logout;
+
+|Admin|
+:Logout;
+
+stop
+
+@enduml
