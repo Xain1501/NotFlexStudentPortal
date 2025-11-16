@@ -3,8 +3,8 @@ Main Application Entry Point
 Run this file to start the server
 """
 
-from Backend.website import create_app
-from Backend.database.connection import init_db
+from website import create_app
+from database.connection import init_db
 
 # Create Flask app
 app = create_app()

@@ -5,7 +5,7 @@ from pymysql import Error
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'muzukashi1234@',
+    'password': 'zain',
     'database': 'student_portal',
     'port': 3307,
     'charset': 'utf8mb4',
@@ -72,7 +72,7 @@ def init_db():
         print("🔄 Initializing database schema...")
         
         # Read and execute schema.sql
-        with open('Backend/database/schema.sql', 'r', encoding='utf-8') as f:
+        with open('database/schema.sql', 'r', encoding='utf-8') as f:
             sql_script = f.read()
             
         connection = pymysql.connect(**DB_CONFIG)

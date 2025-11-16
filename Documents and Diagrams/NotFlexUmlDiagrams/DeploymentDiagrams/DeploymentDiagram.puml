@@ -1,0 +1,105 @@
+@startuml
+!theme plain
+
+skinparam node {
+    BackgroundColor White
+    BorderColor Black
+}
+
+' ==================== MAIN NODES ====================
+
+node "Client Device" as Client {
+  [Web Browser] as Browser
+  database "Local Storage" as Storage
+}
+
+node "Web Server" as WebServer {
+  [Nginx] as Nginx
+  [Flask Application] as Flask
+  database "Session Cache" as Cache
+}
+
+node "Database Server" as DBServer {
+  database "MySQL Database" as MySQL
+}
+
+node "Backup Server" as Backup {
+  database "Backup Storage" as Backups
+}
+
+' ==================== CONNECTIONS ====================
+
+Client -right-> WebServer : **HTTP/HTTPS**\nPort 80/443
+note on link
+REST API with JWT
+JSON Data Exchange
+end note
+
+WebServer -right-> DBServer : **MySQL**\nPort 3307
+note on link
+PyMySQL Driver
+Connection Pooling
+end note
+
+DBServer -right-> Backup : **SSH/RSYNC**\nPort 22
+note on link
+Daily Backups
+Encrypted Transfer
+end note
+
+' Internal connections
+Nginx -down-> Flask : WSGI\nPort 5000
+Flask -down-> Cache : Redis\nPort 6379
+
+' ==================== ARTIFACTS ====================
+
+artifact "React App" as React {
+  [Static Files]
+  [Components]
+}
+
+artifact "Python Backend" as Python {
+  [API Routes]
+  [Services]
+  [Models]
+}
+
+artifact "Database Schema" as Schema {
+  [16 Tables]
+  [Views]
+}
+
+React --> Browser
+Python --> Flask
+Schema --> MySQL
+
+' ==================== NOTES ====================
+
+note top of Client
+**Client Side**
+• Modern Browser
+• JavaScript
+• Local Storage
+end note
+
+note top of WebServer
+**Application Layer**
+• Ubuntu 20.04
+• 4GB RAM
+• Nginx + Flask
+end note
+
+note top of DBServer
+**Database Layer**
+• MySQL 9.50
+• 8GB RAM
+• SSD Storage
+end note
+
+note top of Backup
+**Backup Layer**
+• Daily Backups
+• 30-Day Retention
+• Encrypted
+end note
+@enduml

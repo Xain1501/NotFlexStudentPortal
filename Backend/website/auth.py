@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from Backend.website.models import UserModel, StudentModel, FacultyModel
+from website.models import UserModel, StudentModel, FacultyModel
 import jwt
 import datetime
 from functools import wraps
@@ -62,6 +62,7 @@ def token_required(f):
     return decorated
 
 @auth.route('/api/login', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def login():
     """
     Login for ALL users (student, faculty, admin)
@@ -89,12 +90,10 @@ def login():
     """
     try:
         data = request.get_json()
-        
-        # Validate input
-        if not data:
+        if not data or not data.get('username') or not data.get('password'):
             return jsonify({
-                'success': False,
-                'message': 'No data provided'
+                "status": "error",
+                "message": "Missing username or password"
             }), 400
             
         username = data.get('username')
@@ -210,3 +209,29 @@ def check_auth(current_user):
             'role': current_user['role']
         }
     }), 200
+@auth.route('/api/debug/users', methods=['GET'])
+def debug_users():
+    """Debug endpoint to check all users"""
+    try:
+        query = """
+            SELECT u.user_id, u.username, u.role, u.email, 
+                   s.student_id, s.student_code, s.first_name as student_name,
+                   f.faculty_id, f.faculty_code, f.first_name as faculty_name
+            FROM users u
+            LEFT JOIN students s ON u.user_id = s.user_id
+            LEFT JOIN faculty f ON u.user_id = f.faculty_id
+            ORDER BY u.user_id
+        """
+        from database.connection import execute_query
+        users = execute_query(query)
+        
+        return jsonify({
+            'success': True,
+            'users': users
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
