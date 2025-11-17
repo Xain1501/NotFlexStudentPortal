@@ -1,0 +1,227 @@
+@startuml
+!theme plain
+
+title Student Portal System - Comprehensive Object Scenario
+
+' ==================== ADMIN OBJECTS ====================
+
+object "AdminUser:User" as Admin {
+  user_id = 1
+  username = "admin_portal"
+  role = "admin"
+  email = "admin@university.edu"
+}
+
+object "SystemConfig:RegistrationPeriod" as RegPeriod {
+  period_id = 1001
+  semester = "Fall"
+  year = 2024
+  start_date = "2024-08-20"
+  end_date = "2024-09-10"
+  is_active = false
+}
+
+object "FacultyAttendance:FacultyAttendance" as FacAtt {
+  attendance_id = 901
+  faculty_id = 401
+  date = "2024-09-10"
+  session = "Morning"
+  status = "present"
+  marked_by = 1
+}
+
+object "ApprovedLeave:FacultyLeaves" as Leave {
+  leave_id = 801
+  faculty_id = 401
+  leave_date = "2024-09-20"
+  status = "approved"
+  reason = "Medical appointment"
+}
+
+' ==================== FACULTY OBJECTS ====================
+
+object "DrKhan:Faculty" as Faculty {
+  faculty_id = 401
+  faculty_code = "FAC-2025"
+  first_name = "Dr. Ali"
+  last_name = "Khan"
+  department = "Computer Science"
+  status = "active"
+}
+
+object "DataStructures:CourseSection" as CourseSection {
+  section_id = 201
+  course_code = "CS301"
+  section_code = "A"
+  semester = "Fall 2024"
+  max_capacity = 30
+  enrolled_count = 25
+}
+
+object "CourseAnnouncement:Announcements" as Announcement {
+  announcement_id = 601
+  title = "Midterm Exam Schedule"
+  message = "Midterm will be on Oct 15th"
+  created_at = "2024-09-15"
+}
+
+' ==================== STUDENT OBJECTS ====================
+
+object "StudentMadiha:Student" as Student {
+  student_id = 101
+  student_code = "23K-001"
+  first_name = "Madiha"
+  last_name = "Aslam"
+  current_semester = 5
+  status = "active"
+}
+
+object "StudentAli:Student" as Student2 {
+  student_id = 102
+  student_code = "23K-002"
+  first_name = "Ali"
+  last_name = "Ahmed"
+  current_semester = 5
+  status = "active"
+}
+
+object "EnrollmentRecord:Enrollment" as Enrollment {
+  enrollment_id = 301
+  student_id = 101
+  section_id = 201
+  enrollment_date = "2024-09-01"
+  status = "enrolled"
+}
+
+object "StudentMarks:Marks" as Marks {
+  mark_id = 501
+  enrollment_id = 301
+  quiz_marks = 8/10
+  assignment_marks = 18/20
+  midterm_marks = 17/20
+  final_marks = 25/30
+  total_obtained = 68
+  percentage = 85.0%
+  final_grade = "B"
+  grade_points = 3.0
+}
+
+object "StudentTranscript:Transcript" as Transcript {
+  transcript_id = 701
+  course_code = "CS301"
+  course_name = "Data Structures"
+  credits = 3
+  semester = "Fall 2024"
+  final_grade = "B"
+  grade_points = 3.0
+}
+
+object "StudentAttendance:Attendance" as Attendance {
+  attendance_id = 401
+  student_id = 101
+  section_id = 201
+  attendance_date = "2024-09-12"
+  status = "present"
+}
+
+object "StudentFees:FeeDetails" as Fees {
+  fee_id = 801
+  student_id = 101
+  semester = "Fall 2024"
+  tuition_fee = 40000
+  lab_fee = 5000
+  miscellaneous_fee = 5000
+  amount_due = 50000
+  amount_paid = 30000
+  remaining_balance = 20000
+  status = "pending"
+}
+
+' ==================== DEPARTMENT & COURSE OBJECTS ====================
+
+object "CSDepartment:Department" as Department {
+  dept_id = 1
+  dept_code = "CS"
+  dept_name = "Computer Science"
+}
+
+object "DataStructuresCourse:Course" as Course {
+  course_id = 1
+  course_code = "CS301"
+  course_name = "Data Structures"
+  credits = 3
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' Admin relationships
+Admin --> RegPeriod : configures
+Admin --> FacAtt : marks
+Admin --> Leave : approves
+Admin --> Student : manages
+Admin --> Faculty : manages
+
+' Faculty relationships
+Faculty --> CourseSection : teaches
+Faculty --> Announcement : posts
+Faculty --> Leave : applies
+Faculty --> Marks : uploads
+Faculty --> Attendance : marks
+
+' Student relationships
+Student --> Enrollment : enrolls_in
+Student --> Marks : receives
+Student --> Transcript : has
+Student --> Attendance : has
+Student --> Fees : owes
+Student2 --> Enrollment : also_enrolled
+
+' Academic relationships
+CourseSection --> Enrollment : contains
+CourseSection --> Course : offers
+Course --> Department : belongs_to
+Faculty --> Department : works_in
+Student --> Department : studies_in
+
+' System relationships
+Enrollment --> Marks : has_marks
+Marks --> Transcript : generates
+CourseSection --> Announcement : has_announcements
+
+' ==================== NOTES ====================
+
+note top of Admin
+**Admin Controls:**
+• System Configuration
+• User Management
+• Leave Approval
+• Faculty Attendance
+• Fee Management
+end note
+
+note right of Faculty
+**Faculty Activities:**
+• Teaching Courses
+• Marking Attendance
+• Uploading Marks
+• Posting Announcements
+• Applying for Leave
+end note
+
+note left of Student
+**Student Activities:**
+• Course Enrollment
+• Attendance Tracking
+• Grade Viewing
+• Fee Payment
+• Transcript Access
+end note
+
+note bottom of CourseSection
+**Academic Core:**
+• Course Offering
+• Student Enrollment
+• Grade Management
+• Attendance Tracking
+end note
+@enduml

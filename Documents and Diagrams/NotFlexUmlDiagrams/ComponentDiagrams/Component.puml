@@ -1,0 +1,112 @@
+@startuml
+!theme plain
+
+skinparam component {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam shadowing false
+
+' ==================== PRESENTATION LAYER ====================
+
+rectangle "PRESENTATION LAYER" as Presentation {
+  component "Login Component" as Login
+  component "Student Dashboard" as StudentUI
+  component "Faculty Dashboard" as FacultyUI
+  component "Admin Dashboard" as AdminUI
+}
+
+' ==================== BUSINESS LAYER ====================
+
+rectangle "BUSINESS LAYER" as Business {
+  component "Authentication Service" as AuthService
+  component "Student Service" as StudentService
+  component "Faculty Service" as FacultyService
+  component "Admin Service" as AdminService
+  component "Course Service" as CourseService
+  component "Attendance Service" as AttendanceService
+}
+
+' ==================== DATA LAYER ====================
+
+rectangle "DATA LAYER" as Data {
+  component "User Repository" as UserRepo
+  component "Student Repository" as StudentRepo
+  component "Faculty Repository" as FacultyRepo
+  component "Course Repository" as CourseRepo
+  component "Attendance Repository" as AttendanceRepo
+}
+
+database "MySQL Database" as Database
+
+' ==================== CONNECTIONS ====================
+
+' Presentation -> Business Layer
+Login --> AuthService
+StudentUI --> StudentService
+FacultyUI --> FacultyService
+AdminUI --> AdminService
+
+' Business Layer Internal
+StudentService --> CourseService
+FacultyService --> CourseService
+AdminService --> CourseService
+StudentService --> AttendanceService
+FacultyService --> AttendanceService
+
+' Business -> Data Layer
+StudentService --> StudentRepo
+FacultyService --> FacultyRepo
+AdminService --> UserRepo
+CourseService --> CourseRepo
+AttendanceService --> AttendanceRepo
+
+' Data Layer -> Database
+UserRepo --> Database
+StudentRepo --> Database
+FacultyRepo --> Database
+CourseRepo --> Database
+AttendanceRepo --> Database
+
+' Service Interfaces
+interface "ILogin" as ILogin
+interface "IStudentOps" as IStudentOps
+interface "IFacultyOps" as IFacultyOps
+
+AuthService .. ILogin
+StudentService .. IStudentOps
+FacultyService .. IFacultyOps
+
+Login ..> ILogin
+StudentUI ..> IStudentOps
+FacultyUI ..> IFacultyOps
+
+note right of Presentation
+**Frontend**
+• React.js
+• HTML5/CSS3/JavaScript
+end note
+
+note right of Business
+**Backend**
+• Python Flask
+• REST API
+• JWT Authentication
+end note
+
+note right of Data
+**Data Access**
+• PyMySQL
+• Database Models
+• SQL Queries
+end note
+
+note right of Database
+**MySQL Database**
+• 16 Tables
+• Foreign Keys
+• Views & Indexes
+end note
+@enduml

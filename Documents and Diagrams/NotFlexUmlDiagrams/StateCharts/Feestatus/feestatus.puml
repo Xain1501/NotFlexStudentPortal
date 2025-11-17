@@ -1,0 +1,43 @@
+@startuml
+!theme plain
+
+title Fee Status Lifecycle
+
+[*] --> Pending : Fee record created\n(due_date set)
+
+state Pending {
+  state "Payment Expected" as Expected
+  state "Reminder Sent" as Reminder
+}
+
+Pending --> Paid : payment received\n(payment_date recorded)
+Pending --> Overdue : current_date > due_date\nAND status = pending
+
+Overdue --> Paid : late payment received
+
+Paid --> [*] : Final State
+
+note right of Pending
+**Pending State:**
+• Student notified
+• Payment expected
+• Regular reminders sent
+• Enrollment may be blocked
+end note
+
+note right of Overdue
+**Overdue State:**
+• Late fees may apply
+• Enrollment restrictions
+• Notifications escalated
+• Administrative action
+end note
+
+note right of Paid
+**Paid State:**
+• Payment confirmed
+• Receipt generated
+• All restrictions lifted
+• Record maintained
+end note
+@enduml

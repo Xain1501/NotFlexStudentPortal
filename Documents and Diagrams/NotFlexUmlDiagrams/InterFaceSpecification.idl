@@ -1,0 +1,49 @@
+module StudentPortal {
+  
+  // Authentication Service
+  interface AuthenticationService {
+    LoginResponse login(in string username, in string password);
+    boolean validateToken(in string token);
+    boolean logout(in string token);
+  };
+  
+  // Student Service  
+  interface StudentService {
+    Student getStudentByUserId(in long userId);
+    CourseList getEnrolledCourses(in long studentId);
+    Transcript getTranscript(in long studentId);
+    AttendanceSummary getAttendanceSummary(in long studentId);
+  };
+  
+  // Faculty Service
+  interface FacultyService {
+    SectionList getTeachingSections(in long facultyId);
+    boolean markAttendance(in AttendanceData data);
+    boolean uploadMarks(in long enrollmentId, in MarksData marks);
+    boolean applyLeave(in long facultyId, in string date, in string reason);
+  };
+  
+  // Admin Service
+  interface AdminService {
+    boolean createStudent(in StudentData data);
+    boolean approveLeave(in long leaveId);
+    boolean setRegistrationPeriod(in PeriodData data);
+  };
+  
+  // Data Structures
+  struct LoginResponse {
+    boolean success;
+    string message;
+    string token;
+    User user;
+  };
+  
+  struct MarksData {
+    float quizMarks;
+    float assignment1Marks;
+    float assignment2Marks;
+    float projectMarks;
+    float midtermMarks;
+    float finalMarks;
+  };
+};

@@ -1,0 +1,186 @@
+# Object Interface Specification & IDL
+## Student Portal Management System
+
+# INTERFACE DEFINITION LANGUAGE (IDL)
+
+```idl
+module StudentPortal {
+  
+  // ==================== SERVICE INTERFACES ====================
+  
+  interface AuthenticationService {
+    LoginResponse login(in string username, in string password);
+    boolean validateToken(in string token);
+    User getUserFromToken(in string token);
+    boolean logout(in string token);
+    boolean hasRole(in User user, in string role);
+  };
+  
+  interface StudentService {
+    Student getStudentByUserId(in long userId);
+    Student getStudentByCode(in string studentCode);
+    CourseList getEnrolledCourses(in long studentId);
+    Transcript getTranscript(in long studentId);
+    AttendanceSummaryList getAttendanceSummary(in long studentId);
+    MarksList getAllMarks(in long studentId);
+    FeeDetailsList getFeeDetails(in long studentId);
+    float calculateGPA(in long studentId, in string semester);
+    boolean updateStudent(in long studentId, in StudentData data);
+  };
+  
+  interface FacultyService {
+    Faculty getFacultyByUserId(in long userId);
+    SectionList getTeachingSections(in long facultyId);
+    StudentList getSectionStudents(in long sectionId);
+    boolean markAttendance(in AttendanceRecord data);
+    boolean markBulkAttendance(in AttendanceRecordList records);
+    AttendanceList getSectionAttendance(in long sectionId, in string date);
+    boolean uploadMarks(in long enrollmentId, in MarksData marks);
+    Marks getMarks(in long enrollmentId);
+    boolean applyLeave(in long facultyId, in string date, in string reason);
+    LeaveList getLeaveHistory(in long facultyId);
+  };
+  
+  interface AdminService {
+    DashboardStats getDashboardStats();
+    UserList getAllUsers();
+    StudentList getAllStudents();
+    FacultyList getAllFaculty();
+    boolean createUserWithProfile(in UserData userData, in ProfileData profileData);
+    boolean deleteUser(in long userId);
+    boolean toggleUserStatus(in long userId);
+    boolean markFacultyAttendance(in FacultyAttendanceData data);
+    FacultyAttendanceSummaryList getFacultyAttendanceSummary();
+    
+  };
+  
+  interface EnrollmentService {
+    SectionList getAvailableCourses(in string semester, in long year);
+    SeatInfo checkSeats(in long sectionId);
+    boolean enrollStudent(in long studentId, in long sectionId);
+    boolean dropCourse(in long studentId, in long sectionId);
+    EnrollmentList getStudentEnrollments(in long studentId);
+    boolean isEnrolled(in long studentId, in long sectionId);
+    long getEnrollmentCount(in long sectionId);
+  };
+  
+  interface MarksService {
+    boolean uploadMarks(in long enrollmentId, in MarksData marks);
+    string calculateGrade(in float percentage);
+    float calculateGradePoints(in string grade);
+    float calculateTotal(in MarksData marks);
+    float calculatePercentage(in float total, in float maximum);
+    Marks getMarksByEnrollment(in long enrollmentId);
+    boolean updateMarks(in long markId, in MarksData marks);
+    boolean autoUpdateTranscript(in long enrollmentId, in string grade, in float gradePoints);
+  };
+  
+  interface AttendanceService {
+    boolean markAttendance(in AttendanceRecord record);
+    boolean markBulkAttendance(in AttendanceRecordList records);
+    AttendanceList getAttendanceByDate(in long sectionId, in string date);
+    AttendanceSummaryList getAttendanceSummary(in long studentId);
+    float calculateAttendancePercentage(in long studentId, in long sectionId);
+    AttendanceList getAttendanceHistory(in long studentId, in long sectionId);
+  };
+  
+  interface FeeService {
+    FeeDetailsList getAllFees();
+    FeeDetailsList getStudentFees(in long studentId);
+    boolean addFeeRecord(in FeeData data);
+    boolean markFeePaid(in long feeId);
+    float calculateRemainingBalance(in FeeDetails fee);
+    FeeDetailsList getOverdueFees();
+    boolean updateFeeStatus(in long feeId, in string status);
+  };
+  
+  interface LeaveService {
+    boolean applyLeave(in LeaveData data);
+    boolean approveLeave(in long leaveId);
+    boolean rejectLeave(in long leaveId);
+    LeaveList getAllLeaves();
+    LeaveList getLeavesByFaculty(in long facultyId);
+    LeaveList getPendingLeaves();
+    Leave getLeaveById(in long leaveId);
+  };
+  
+  // ==================== DATA STRUCTURES ====================
+  
+  struct LoginResponse {
+    boolean success;
+    string message;
+    string token;
+    User user;
+  };
+  
+  struct MarksData {
+    float quizMarks;
+    float assignment1Marks;
+    float assignment2Marks;
+    float projectMarks;
+    float midtermMarks;
+    float finalMarks;
+  };
+  
+  struct AttendanceRecord {
+    long studentId;
+    long sectionId;
+    string attendanceDate;
+    string status;
+  };
+  
+  struct FacultyAttendanceData {
+    long facultyId;
+    string attendanceDate;
+    string session;
+    string status;
+    long markedBy;
+  };
+  
+  struct SeatInfo {
+    long sectionId;
+    long maxCapacity;
+    long enrolledCount;
+    long seatsAvailable;
+  };
+  
+  struct FeeData {
+    long studentId;
+    string semester;
+    float tuitionFee;
+    float labFee;
+    float miscellaneousFee;
+    string dueDate;
+  };
+  
+  struct LeaveData {
+    long facultyId;
+    string leaveDate;
+    string reason;
+  };
+  
+  struct RegistrationPeriodData {
+    string semester;
+    long year;
+    string startDate;
+    string endDate;
+    boolean isActive;
+  };
+  
+  struct DashboardStats {
+    long totalStudents;
+    long totalFaculty;
+    long totalCourses;
+    long pendingFees;
+    long pendingLeaves;
+  };
+  
+  struct AttendanceSummary {
+    string courseCode;
+    string courseName;
+    long totalClasses;
+    long present;
+    long absent;
+    float attendancePercentage;
+  };
+};

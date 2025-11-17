@@ -1,0 +1,44 @@
+@startuml
+!theme plain
+
+title Enrollment Status Lifecycle
+
+[*] --> NotEnrolled : Initial State
+
+NotEnrolled --> Enrolled : student enrolls\n(enrollment_date recorded)
+
+state Enrolled {
+  state "Active Enrollment" as Active
+  state "Classes Ongoing" as Classes
+  state "Exams Completed" as ExamsDone
+}
+
+Enrolled --> Dropped : student drops course\nor admin removes
+Enrolled --> Completed : semester ends\nmarks finalized
+
+Dropped --> [*] : Final State
+Completed --> [*] : Final State
+
+note right of Enrolled
+**Enrolled State Details:**
+• Student can attend classes
+• Faculty can mark attendance
+• Marks can be entered
+• Transcript can be updated
+end note
+
+note right of Dropped
+**Dropped State:**
+• No further actions
+• Cannot re-enroll same section
+• Record maintained for history
+end note
+
+note right of Completed
+**Completed State:**
+• Marks finalized
+• Grade assigned
+• Transcript entry created
+• GPA calculated
+end note
+@enduml
