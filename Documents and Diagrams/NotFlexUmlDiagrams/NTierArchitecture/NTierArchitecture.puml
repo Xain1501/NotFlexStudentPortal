@@ -1,0 +1,37 @@
+@startuml
+title N-Tier Architecture - Student Portal
+
+frame "Tier 1: Client" {
+  [React UI]
+}
+
+frame "Tier 2: API Gateway" {
+  [REST Endpoints]
+}
+
+frame "Tier 3: Application Services" {
+  [Authentication Service]
+  [Student Service]
+  [Faculty Service]
+  [Admin Service]
+}
+
+frame "Tier 4: Data Access Layer" {
+  [Repositories]
+}
+
+frame "Tier 5: Database" {
+  [MySQL Database]
+}
+
+[React UI] --> [REST Endpoints]
+[REST Endpoints] --> [Authentication Service]
+[REST Endpoints] --> [Student Service]
+[REST Endpoints] --> [Faculty Service]
+[REST Endpoints] --> [Admin Service]
+[Authentication Service] --> [Repositories]
+[Student Service] --> [Repositories]
+[Faculty Service] --> [Repositories]
+[Admin Service] --> [Repositories]
+[Repositories] --> [MySQL Database]
+@enduml

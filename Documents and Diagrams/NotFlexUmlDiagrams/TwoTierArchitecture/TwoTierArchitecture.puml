@@ -1,0 +1,15 @@
+@startuml
+title Two-Tier Architecture - Student Portal
+
+frame "Client Tier" {
+  [React Frontend]
+}
+
+frame "Server Tier" {
+  [Flask App + Business Logic + Database Access]
+  [MySQL Database]
+}
+
+[React Frontend] --> [Flask App + Business Logic + Database Access] : HTTP Request
+[Flask App + Business Logic + Database Access] --> [MySQL Database] : SQL Queries
+@enduml

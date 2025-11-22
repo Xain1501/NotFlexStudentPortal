@@ -1,0 +1,35 @@
+@startuml
+title Three-Tier Architecture
+
+frame "PRESENTATION TIER" {
+  [Student Module]
+  [Faculty Module]
+  [Admin Module]
+}
+
+frame "APPLICATION TIER" {
+  [REST API]
+  [Route Handling]
+  [Flask Application]
+  [Process Data]
+  [Business Logic]
+}
+
+frame "DATA TIER" {
+  [MySQL Database]
+}
+
+[Student Module] --> [REST API] : HTTP Requests
+[Faculty Module] --> [REST API] : HTTP Requests
+[Admin Module] --> [REST API] : HTTP Requests
+
+[REST API] --> [Route Handling]
+[Route Handling] --> [Flask Application]
+[Flask Application] --> [Process Data]
+[Process Data] --> [Business Logic]
+[Business Logic] --> [MySQL Database] : SQL Queries
+
+note on link
+Backend: Python Flask Framework
+end note
+@enduml

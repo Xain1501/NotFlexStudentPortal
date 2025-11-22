@@ -1,8 +1,3 @@
-#website folder --> python package
-#whatever insides it will run automatically 
-# ============================================
-# FILE 5: Backend/website/__init__.py
-# ============================================
 """
 Flask App Initialization
 """
@@ -27,20 +22,18 @@ def create_app():
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
          allow_headers=['Content-Type', 'Authorization'])
     
-    # Register blueprints
-    from .auth import auth
-    from .views import views
+    # Register main blueprints
+    from website.auth import auth
+    from website.views import views
     
     app.register_blueprint(auth, url_prefix='/')
     app.register_blueprint(views, url_prefix='/')
     
+    # Register route blueprints from routes folder
+    from website.routes import student_bp, faculty_bp, course_bp
+    
+    app.register_blueprint(student_bp, url_prefix='/')
+    app.register_blueprint(faculty_bp, url_prefix='/')
+    app.register_blueprint(course_bp, url_prefix='/')
+    
     return app
-
-
-# ============================================
-# FILE 6: main.py
-# ============================================
-"""
-Main Application Entry Point
-Run this file to start the server
-"""

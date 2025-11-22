@@ -1,12 +1,11 @@
 from flask import Blueprint, request, jsonify
+from flask_cors import cross_origin 
 from website.models import UserModel, StudentModel, FacultyModel
 import jwt
 import datetime
 from functools import wraps
 
-
 auth = Blueprint('auth', __name__)
-
 
 JWT_SECRET = 'CRAWLINGBACKTOYOU'
 JWT_ALGORITHM = 'HS256'
@@ -209,6 +208,7 @@ def check_auth(current_user):
             'role': current_user['role']
         }
     }), 200
+
 @auth.route('/api/debug/users', methods=['GET'])
 def debug_users():
     """Debug endpoint to check all users"""
