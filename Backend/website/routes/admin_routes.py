@@ -1,708 +1,1203 @@
-# backend/app/routes/admin.py
+"""
+Admin Routes - All admin-related API endpoints
+"""
+
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from app import db
-from app.models import User, Student, Faculty, Course, Fee, Enrollment
-from app.utils import role_required
-from datetime import datetime
-from sqlalchemy import func
+from website.models import StudentModel, FacultyModel, CourseModel, UserModel, AdminModel, DepartmentModel
+from website.auth import token_required
+from database.connection import execute_query
 
-bp = Blueprint('admin', __name__, url_prefix='/api/admin')
+admin_bp = Blueprint('admin', __name__)
 
-@bp.route('/dashboard', methods=['GET'])
-@jwt_required()
-@role_required(['admin'])
-def get_dashboard():
-    """Get admin dashboard statistics"""
+# ==================== ADMIN DASHBOARD ====================
+
+@admin_bp.route('/api/admin/dashboard', methods=['GET'])
+@token_required
+def get_admin_dashboard(current_user):
+    """Get Admin Dashboard Data"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied - Admin only'}), 403
+    
     try:
-        total_students = Student.query.count()
-        active_students = Student.query.filter_by(status='active').count()
-        total_faculty = Faculty.query.count()
-        total_courses = Course.query.count()
+        students_query = "SELECT COUNT(*) as count FROM students WHERE status = 'active'"
+        faculty_query = "SELECT COUNT(*) as count FROM faculty WHERE status = 'active'"
+        courses_query = "SELECT COUNT(*) as count FROM courses"
+        fees_query = "SELECT COUNT(*) as count FROM fee_details WHERE status = 'pending'"
         
-        # Fee statistics
-        pending_fees = Fee.query.filter_by(status='pending').count()
-        total_fee_amount = db.session.query(func.sum(Fee.amount)).filter_by(status='paid').scalar() or 0
+        total_students = execute_query(students_query)[0]['count']
+        total_faculty = execute_query(faculty_query)[0]['count']
+        total_courses = execute_query(courses_query)[0]['count']
+        pending_fees = execute_query(fees_query)[0]['count']
+        
+        stats = {
+            'total_students': total_students,
+            'total_faculty': total_faculty,
+            'total_courses': total_courses,
+            'pending_fees': pending_fees
+        }
         
         return jsonify({
-            "statistics": {
-                "total_students": total_students,
-                "active_students": active_students,
-                "total_faculty": total_faculty,
-                "total_courses": total_courses,
-                "pending_fees": pending_fees,
-                "total_revenue": float(total_fee_amount)
+            'success': True,
+            'data': {
+                'stats': stats,
+                'recent_activity': [
+                    {'type': 'system', 'message': 'Admin dashboard accessed'},
+                    {'type': 'users', 'message': f'Total students: {total_students}'}
+                ]
             }
         }), 200
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Admin dashboard error: {e}")
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# ==================== USER MANAGEMENT ====================
+
+@admin_bp.route('/api/admin/users', methods=['GET'])
+@token_required
+def get_all_users(current_user):
+    """Get all users for admin"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        query = """
+            SELECT u.*, 
+                s.student_id, s.student_code, s.first_name as student_first_name, s.last_name as student_last_name,
+                f.faculty_id, f.faculty_code, f.first_name as faculty_first_name, f.last_name as faculty_last_name
+            FROM users u
+            LEFT JOIN students s ON u.user_id = s.user_id
+            LEFT JOIN faculty f ON u.user_id = f.user_id
+            ORDER BY u.created_at DESC
+        """
+        users = execute_query(query)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'users': users
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/users/<int:user_id>', methods=['DELETE'])
+@token_required
+def delete_user(current_user, user_id):
+    """Delete user"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        if user_id == current_user['user_id']:
+            return jsonify({'success': False, 'message': 'Cannot delete your own account'}), 400
+        
+        delete_query = "DELETE FROM users WHERE user_id = %s"
+        execute_query(delete_query, (user_id,), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': 'User deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/users/<int:user_id>/toggle-status', methods=['PUT'])
+@token_required
+def toggle_user_status(current_user, user_id):
+    """Activate/Deactivate user"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        current_query = "SELECT is_active FROM users WHERE user_id = %s"
+        current_status = execute_query(current_query, (user_id,))[0]['is_active']
+        
+        new_status = not current_status
+        update_query = "UPDATE users SET is_active = %s WHERE user_id = %s"
+        execute_query(update_query, (new_status, user_id), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': f'User {"activated" if new_status else "deactivated"} successfully',
+            'is_active': new_status
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
 
 # ==================== STUDENT MANAGEMENT ====================
 
-@bp.route('/students', methods=['GET'])
-@jwt_required()
-@role_required(['admin'])
-def get_all_students():
-    """Get all students"""
-    try:
-        students = Student.query.all()
-        
-        student_list = []
-        for student in students:
-            user = student.user
-            student_list.append({
-                "id": student.id,
-                "student_id": student.student_id,
-                "student_code": student.student_id,
-                "name": f"{user.first_name} {user.last_name}".strip(),
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "batch": student.batch,
-                "section": student.section,
-                "campus": student.campus,
-                "status": student.status,
-                "cgpa": float(student.cgpa) if student.cgpa else 0.0,
-                "departmentId": student.batch,  # Using batch as department for now
-                "department_id": student.batch,
-                "rollNo": student.student_id
-            })
-        
-        return jsonify({"students": student_list}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@bp.route('/students', methods=['POST'])
-@jwt_required()
-@role_required(['admin'])
-def create_student():
-    """Create a new student"""
-    data = request.get_json()
+@admin_bp.route('/api/admin/students', methods=['GET'])
+@token_required
+def get_all_students_admin(current_user):
+    """Get all students for admin management"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        # Validate required fields
-        if not data.get('student_id') and not data.get('student_code'):
-            return jsonify({"error": "Student ID/Code is required"}), 400
-        
-        student_id = data.get('student_id') or data.get('student_code')
-        username = data.get('username', f"student_{student_id}")
-        email = data.get('email', f"{student_id}@student.com")
-        
-        # Check if username already exists
-        if User.query.filter_by(username=username).first():
-            return jsonify({"error": "Username already exists"}), 400
-        
-        # Check if email already exists
-        if User.query.filter_by(email=email).first():
-            return jsonify({"error": "Email already exists"}), 400
-        
-        # Check if student_id already exists
-        if Student.query.filter_by(student_id=student_id).first():
-            return jsonify({"error": "Student ID already exists"}), 400
-        
-        # Create user
-        user = User(
-            username=username,
-            email=email,
-            role='student',
-            first_name=data.get('first_name', ''),
-            last_name=data.get('last_name', ''),
-            gender=data.get('gender'),
-            cnic=data.get('cnic'),
-            mobile=data.get('mobile'),
-            nationality=data.get('nationality'),
-            address=data.get('address'),
-            city=data.get('city'),
-            country=data.get('country'),
-            postal_code=data.get('postal_code')
-        )
-        user.set_password(data.get('password', 'student123'))
-        
-        db.session.add(user)
-        db.session.flush()
-        
-        # Create student
-        student = Student(
-            user_id=user.id,
-            student_id=student_id,
-            batch=data.get('batch', str(datetime.now().year)),
-            section=data.get('section', ''),
-            campus=data.get('campus', 'Main Campus'),
-            status='active',
-            cgpa=0.0,
-            admission_date=datetime.now().date()
-        )
-        
-        db.session.add(student)
-        db.session.commit()
+        students = StudentModel.get_all_students_for_admin()
         
         return jsonify({
-            "message": "Student created successfully", 
-            "id": student.id,
-            "student_id": student.student_id
-        }), 201
+            'success': True,
+            'data': {
+                'students': students
+            }
+        }), 200
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-@bp.route('/students/<int:student_id>', methods=['PUT'])
-@jwt_required()
-@role_required(['admin'])
-def update_student(student_id):
-    """Update student information"""
-    data = request.get_json()
+
+@admin_bp.route('/api/admin/students/<int:student_id>', methods=['GET'])
+@token_required
+def get_student_details_admin(current_user, student_id):
+    """Get detailed student information"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        student = Student.query.get(student_id)
+        student = StudentModel.get_student_by_id(student_id)
         
         if not student:
-            return jsonify({"error": "Student not found"}), 404
+            return jsonify({'success': False, 'message': 'Student not found'}), 404
         
-        user = student.user
+        enrollments = CourseModel.get_student_enrollments(student_id)
+        fees = StudentModel.get_fee_details(student_id)
+        attendance = StudentModel.get_attendance_summary(student_id)
         
-        # Update user fields
-        if 'first_name' in data:
-            user.first_name = data['first_name']
-        if 'last_name' in data:
-            user.last_name = data['last_name']
-        if 'email' in data:
-            # Check if email is already taken by another user
-            existing = User.query.filter_by(email=data['email']).first()
-            if existing and existing.id != user.id:
-                return jsonify({"error": "Email already exists"}), 400
-            user.email = data['email']
-        if 'gender' in data:
-            user.gender = data['gender']
-        if 'mobile' in data:
-            user.mobile = data['mobile']
-        if 'cnic' in data:
-            user.cnic = data['cnic']
-        if 'address' in data:
-            user.address = data['address']
-        if 'city' in data:
-            user.city = data['city']
-        if 'country' in data:
-            user.country = data['country']
-        
-        # Update student fields
-        if 'batch' in data:
-            student.batch = data['batch']
-        if 'section' in data:
-            student.section = data['section']
-        if 'campus' in data:
-            student.campus = data['campus']
-        if 'status' in data:
-            student.status = data['status']
-        if 'cgpa' in data:
-            student.cgpa = float(data['cgpa'])
-        
-        db.session.commit()
-        
-        return jsonify({"message": "Student updated successfully"}), 200
+        return jsonify({
+            'success': True,
+            'data': {
+                'student': student,
+                'enrollments': enrollments,
+                'fees': fees,
+                'attendance': attendance
+            }
+        }), 200
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-@bp.route('/students/<int:student_id>', methods=['DELETE'])
-@jwt_required()
-@role_required(['admin'])
-def delete_student(student_id):
-    """Delete a student"""
+
+@admin_bp.route('/api/admin/students', methods=['POST'])
+@token_required
+def create_student_admin(current_user):
+    """Create new student"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
     try:
-        student = Student.query.get(student_id)
+        data = request.get_json()
         
+        required_fields = ['student_code', 'first_name', 'last_name', 'email', 'major_dept_id']
+        if not all(field in data for field in required_fields):
+            return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+        
+        user_data = {
+            'username': data['student_code'],
+            'password_hash': 'password123',
+            'email': data['email'],
+            'role': 'student'
+        }
+        
+        profile_data = {
+            'student_code': data['student_code'],
+            'first_name': data['first_name'],
+            'last_name': data['last_name'],
+            'date_of_birth': data.get('date_of_birth'),
+            'phone': data.get('phone'),
+            'cnic': data.get('cnic'),
+            'major_dept_id': data['major_dept_id'],
+            'current_semester': data.get('current_semester', 1)
+        }
+        
+        success, message = UserModel.create_user_with_profile(user_data, profile_data)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Student created successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': message
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/students/<int:student_id>', methods=['PUT'])
+@token_required
+def update_student_admin(current_user, student_id):
+    """Update student information"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        
+        allowed_fields = ['first_name', 'last_name', 'date_of_birth', 'phone', 'cnic', 
+                         'current_semester', 'major_dept_id', 'status']
+        
+        update_data = {key: data[key] for key in allowed_fields if key in data}
+        
+        if not update_data:
+            return jsonify({'success': False, 'message': 'No valid fields to update'}), 400
+        
+        success = StudentModel.update_student(student_id, update_data)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Student updated successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to update student'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/students/<int:student_id>', methods=['DELETE'])
+@token_required
+def delete_student_admin(current_user, student_id):
+    """Delete student"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        student = StudentModel.get_student_by_id(student_id)
         if not student:
-            return jsonify({"error": "Student not found"}), 404
+            return jsonify({'success': False, 'message': 'Student not found'}), 404
         
-        user = student.user
+        delete_query = "DELETE FROM users WHERE user_id = %s"
+        execute_query(delete_query, (student['user_id'],), fetch=False)
         
-        # Delete user (cascade will delete student and related records)
-        db.session.delete(user)
-        db.session.commit()
-        
-        return jsonify({"message": "Student deleted successfully"}), 200
+        return jsonify({
+            'success': True,
+            'message': 'Student deleted successfully'
+        }), 200
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/students/<int:student_id>/toggle-status', methods=['PUT'])
+@token_required
+def toggle_student_status(current_user, student_id):
+    """Activate/Deactivate student"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        student = StudentModel.get_student_by_id(student_id)
+        if not student:
+            return jsonify({'success': False, 'message': 'Student not found'}), 404
+        
+        new_status = 'active' if student['status'] != 'active' else 'inactive'
+        success = StudentModel.update_student(student_id, {'status': new_status})
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': f'Student {new_status} successfully',
+                'status': new_status
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to update student status'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
 
 # ==================== FACULTY MANAGEMENT ====================
 
-@bp.route('/faculty', methods=['GET'])
-@jwt_required()
-@role_required(['admin'])
-def get_all_faculty():
-    """Get all faculty members"""
-    try:
-        faculty_members = Faculty.query.all()
-        
-        faculty_list = []
-        for faculty in faculty_members:
-            user = faculty.user
-            
-            # Count courses taught
-            courses_count = Course.query.filter_by(faculty_id=faculty.id).count()
-            
-            faculty_list.append({
-                "id": faculty.id,
-                "faculty_id": faculty.faculty_id,
-                "name": f"{user.first_name} {user.last_name}".strip(),
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "mobile": user.mobile,
-                "department": faculty.department,
-                "designation": faculty.designation,
-                "salary": float(faculty.salary) if faculty.salary else 0.0,
-                "joining_date": faculty.joining_date.isoformat() if faculty.joining_date else None,
-                "courses_count": courses_count
-            })
-        
-        return jsonify({"faculty": faculty_list}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@bp.route('/faculty', methods=['POST'])
-@jwt_required()
-@role_required(['admin'])
-def create_faculty():
-    """Create a new faculty member"""
-    data = request.get_json()
+@admin_bp.route('/api/admin/faculty', methods=['GET'])
+@token_required
+def get_all_faculty_admin(current_user):
+    """Get all faculty for admin management"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        # Validate required fields
-        if not data.get('faculty_id'):
-            return jsonify({"error": "Faculty ID is required"}), 400
-        
-        username = data.get('username', f"faculty_{data['faculty_id']}")
-        email = data.get('email', f"{data['faculty_id']}@faculty.com")
-        
-        # Check if username exists
-        if User.query.filter_by(username=username).first():
-            return jsonify({"error": "Username already exists"}), 400
-        
-        # Check if email exists
-        if User.query.filter_by(email=email).first():
-            return jsonify({"error": "Email already exists"}), 400
-        
-        # Check if faculty_id exists
-        if Faculty.query.filter_by(faculty_id=data['faculty_id']).first():
-            return jsonify({"error": "Faculty ID already exists"}), 400
-        
-        # Create user
-        user = User(
-            username=username,
-            email=email,
-            role='faculty',
-            first_name=data.get('first_name', ''),
-            last_name=data.get('last_name', ''),
-            mobile=data.get('mobile'),
-            gender=data.get('gender'),
-            cnic=data.get('cnic')
-        )
-        user.set_password(data.get('password', 'faculty123'))
-        
-        db.session.add(user)
-        db.session.flush()
-        
-        # Create faculty
-        faculty = Faculty(
-            user_id=user.id,
-            faculty_id=data['faculty_id'],
-            department=data.get('department', ''),
-            designation=data.get('designation', ''),
-            salary=float(data.get('salary', 0)),
-            joining_date=datetime.now().date()
-        )
-        
-        db.session.add(faculty)
-        db.session.commit()
+        faculty = FacultyModel.get_all_faculty_for_admin()
         
         return jsonify({
-            "message": "Faculty created successfully", 
-            "id": faculty.id,
-            "faculty_id": faculty.faculty_id
-        }), 201
+            'success': True,
+            'data': {
+                'faculty': faculty
+            }
+        }), 200
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-@bp.route('/faculty/<int:faculty_id>', methods=['PUT'])
-@jwt_required()
-@role_required(['admin'])
-def update_faculty(faculty_id):
+
+@admin_bp.route('/api/admin/faculty/<int:faculty_id>', methods=['GET'])
+@token_required
+def get_faculty_details_admin(current_user, faculty_id):
+    """Get detailed faculty information"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        faculty = FacultyModel.get_faculty_by_id(faculty_id)
+        
+        if not faculty:
+            return jsonify({'success': False, 'message': 'Faculty not found'}), 404
+        
+        courses = FacultyModel.get_teaching_courses(faculty_id)
+        leaves = FacultyModel.get_faculty_leaves(faculty_id)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'faculty': faculty,
+                'teaching_courses': courses,
+                'leaves': leaves
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/faculty', methods=['POST'])
+@token_required
+def create_faculty_admin(current_user):
+    """Create new faculty"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        
+        required_fields = ['faculty_code', 'first_name', 'last_name', 'email', 'department_id']
+        if not all(field in data for field in required_fields):
+            return jsonify({'success': False, 'message': 'Missing required fields'}), 400
+        
+        user_data = {
+            'username': data['faculty_code'],
+            'password_hash': 'password123',
+            'email': data['email'],
+            'role': 'faculty'
+        }
+        
+        profile_data = {
+            'faculty_code': data['faculty_code'],
+            'first_name': data['first_name'],
+            'last_name': data['last_name'],
+            'phone': data.get('phone'),
+            'department_id': data['department_id'],
+            'salary': data.get('salary', 100000)
+        }
+        
+        success, message = UserModel.create_user_with_profile(user_data, profile_data)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Faculty created successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': message
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/faculty/<int:faculty_id>', methods=['PUT'])
+@token_required
+def update_faculty_admin(current_user, faculty_id):
     """Update faculty information"""
-    data = request.get_json()
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        faculty = Faculty.query.get(faculty_id)
+        data = request.get_json()
         
-        if not faculty:
-            return jsonify({"error": "Faculty not found"}), 404
+        allowed_fields = ['first_name', 'last_name', 'phone', 'salary', 'department_id', 'status']
+        update_data = {key: data[key] for key in allowed_fields if key in data}
         
-        user = faculty.user
+        if not update_data:
+            return jsonify({'success': False, 'message': 'No valid fields to update'}), 400
         
-        # Update user fields
-        if 'first_name' in data:
-            user.first_name = data['first_name']
-        if 'last_name' in data:
-            user.last_name = data['last_name']
-        if 'email' in data:
-            existing = User.query.filter_by(email=data['email']).first()
-            if existing and existing.id != user.id:
-                return jsonify({"error": "Email already exists"}), 400
-            user.email = data['email']
-        if 'mobile' in data:
-            user.mobile = data['mobile']
+        success = FacultyModel.update_faculty(faculty_id, update_data)
         
-        # Update faculty fields
-        if 'department' in data:
-            faculty.department = data['department']
-        if 'designation' in data:
-            faculty.designation = data['designation']
-        if 'salary' in data:
-            faculty.salary = float(data['salary'])
-        
-        db.session.commit()
-        
-        return jsonify({"message": "Faculty updated successfully"}), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
-
-@bp.route('/faculty/<int:faculty_id>', methods=['DELETE'])
-@jwt_required()
-@role_required(['admin'])
-def delete_faculty(faculty_id):
-    """Delete a faculty member"""
-    try:
-        faculty = Faculty.query.get(faculty_id)
-        
-        if not faculty:
-            return jsonify({"error": "Faculty not found"}), 404
-        
-        # Check if faculty has assigned courses
-        courses_count = Course.query.filter_by(faculty_id=faculty.id).count()
-        if courses_count > 0:
+        if success:
             return jsonify({
-                "error": f"Cannot delete faculty. They have {courses_count} assigned course(s). Please reassign courses first."
+                'success': True,
+                'message': 'Faculty updated successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to update faculty'
             }), 400
-        
-        user = faculty.user
-        db.session.delete(user)
-        db.session.commit()
-        
-        return jsonify({"message": "Faculty deleted successfully"}), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
-
-# ==================== COURSE MANAGEMENT ====================
-
-@bp.route('/courses', methods=['GET'])
-@jwt_required()
-@role_required(['admin'])
-def get_all_courses():
-    """Get all courses"""
-    try:
-        courses = Course.query.all()
-        
-        course_list = []
-        for course in courses:
-            faculty_name = ""
-            if course.faculty:
-                user = User.query.get(course.faculty.user_id)
-                faculty_name = f"{user.first_name} {user.last_name}".strip()
             
-            # Count enrolled students
-            enrolled_count = Enrollment.query.filter_by(
-                course_id=course.id, 
-                status='enrolled'
-            ).count()
-            
-            course_list.append({
-                "id": course.id,
-                "course_code": course.course_code,
-                "course_name": course.course_name,
-                "credit_hours": course.credit_hours,
-                "semester": course.semester,
-                "room_number": course.room_number,
-                "faculty_id": course.faculty_id,
-                "faculty_name": faculty_name,
-                "enrolled_students": enrolled_count
-            })
-        
-        return jsonify({"courses": course_list}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-@bp.route('/courses', methods=['POST'])
-@jwt_required()
-@role_required(['admin'])
-def create_course():
-    """Create a new course"""
-    data = request.get_json()
+
+@admin_bp.route('/api/admin/faculty/<int:faculty_id>', methods=['DELETE'])
+@token_required
+def delete_faculty_admin(current_user, faculty_id):
+    """Delete faculty"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        # Validate required fields
-        if not data.get('course_code'):
-            return jsonify({"error": "Course code is required"}), 400
-        if not data.get('course_name'):
-            return jsonify({"error": "Course name is required"}), 400
-        if not data.get('credit_hours'):
-            return jsonify({"error": "Credit hours is required"}), 400
+        faculty = FacultyModel.get_faculty_by_id(faculty_id)
+        if not faculty:
+            return jsonify({'success': False, 'message': 'Faculty not found'}), 404
         
-        # Check if course code exists
-        if Course.query.filter_by(course_code=data['course_code']).first():
-            return jsonify({"error": "Course code already exists"}), 400
-        
-        # Validate faculty if provided
-        if data.get('faculty_id'):
-            faculty = Faculty.query.get(data['faculty_id'])
-            if not faculty:
-                return jsonify({"error": "Faculty not found"}), 404
-        
-        course = Course(
-            course_code=data['course_code'],
-            course_name=data['course_name'],
-            credit_hours=int(data['credit_hours']),
-            faculty_id=data.get('faculty_id'),
-            semester=data.get('semester', ''),
-            room_number=data.get('room_number', '')
-        )
-        
-        db.session.add(course)
-        db.session.commit()
+        delete_query = "DELETE FROM users WHERE user_id = %s"
+        execute_query(delete_query, (faculty['user_id'],), fetch=False)
         
         return jsonify({
-            "message": "Course created successfully", 
-            "id": course.id,
-            "course_code": course.course_code
-        }), 201
+            'success': True,
+            'message': 'Faculty deleted successfully'
+        }), 200
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-@bp.route('/courses/<int:course_id>', methods=['PUT'])
-@jwt_required()
-@role_required(['admin'])
-def update_course(course_id):
-    """Update course information"""
-    data = request.get_json()
+
+@admin_bp.route('/api/admin/faculty/<int:faculty_id>/toggle-status', methods=['PUT'])
+@token_required
+def toggle_faculty_status(current_user, faculty_id):
+    """Activate/Deactivate faculty"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        course = Course.query.get(course_id)
+        faculty = FacultyModel.get_faculty_by_id(faculty_id)
+        if not faculty:
+            return jsonify({'success': False, 'message': 'Faculty not found'}), 404
         
-        if not course:
-            return jsonify({"error": "Course not found"}), 404
+        new_status = 'active' if faculty['status'] != 'active' else 'inactive'
+        success = FacultyModel.update_faculty(faculty_id, {'status': new_status})
         
-        # Update fields
-        if 'course_name' in data:
-            course.course_name = data['course_name']
-        if 'credit_hours' in data:
-            course.credit_hours = int(data['credit_hours'])
-        if 'faculty_id' in data:
-            if data['faculty_id']:
-                faculty = Faculty.query.get(data['faculty_id'])
-                if not faculty:
-                    return jsonify({"error": "Faculty not found"}), 404
-            course.faculty_id = data['faculty_id']
-        if 'semester' in data:
-            course.semester = data['semester']
-        if 'room_number' in data:
-            course.room_number = data['room_number']
-        
-        db.session.commit()
-        
-        return jsonify({"message": "Course updated successfully"}), 200
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
-
-@bp.route('/courses/<int:course_id>', methods=['DELETE'])
-@jwt_required()
-@role_required(['admin'])
-def delete_course(course_id):
-    """Delete a course"""
-    try:
-        course = Course.query.get(course_id)
-        
-        if not course:
-            return jsonify({"error": "Course not found"}), 404
-        
-        # Check if course has enrollments
-        enrollments_count = Enrollment.query.filter_by(course_id=course.id).count()
-        if enrollments_count > 0:
+        if success:
             return jsonify({
-                "error": f"Cannot delete course. {enrollments_count} student(s) are enrolled. Please remove enrollments first."
+                'success': True,
+                'message': f'Faculty {new_status} successfully',
+                'status': new_status
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to update faculty status'
             }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# ==================== DEPARTMENT MANAGEMENT ====================
+
+@admin_bp.route('/api/admin/departments', methods=['GET'])
+@token_required
+def get_all_departments(current_user):
+    """Get all departments"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        departments = DepartmentModel.get_all_departments()
         
-        db.session.delete(course)
-        db.session.commit()
-        
-        return jsonify({"message": "Course deleted successfully"}), 200
+        return jsonify({
+            'success': True,
+            'data': {
+                'departments': departments
+            }
+        }), 200
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/departments', methods=['POST'])
+@token_required
+def create_department(current_user):
+    """Create new department"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        dept_code = data.get('dept_code')
+        dept_name = data.get('dept_name')
+        
+        if not dept_code or not dept_name:
+            return jsonify({'success': False, 'message': 'Department code and name are required'}), 400
+        
+        success = DepartmentModel.create_department(dept_code, dept_name)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Department created successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to create department'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
 
 # ==================== FEE MANAGEMENT ====================
 
-@bp.route('/fees', methods=['GET'])
-@jwt_required()
-@role_required(['admin'])
-def get_all_fees():
-    """Get all fee records"""
-    try:
-        fees = Fee.query.order_by(Fee.due_date.desc()).all()
-        
-        fee_list = []
-        for fee in fees:
-            student = fee.student
-            user = student.user
-            
-            fee_list.append({
-                "id": fee.id,
-                "student_id": student.student_id,
-                "student_name": f"{user.first_name} {user.last_name}".strip(),
-                "challan_number": fee.challan_number,
-                "amount": float(fee.amount),
-                "due_date": fee.due_date.isoformat(),
-                "paid_date": fee.paid_date.isoformat() if fee.paid_date else None,
-                "status": fee.status,
-                "semester": fee.semester,
-                "description": fee.description
-            })
-        
-        return jsonify({"fees": fee_list}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@bp.route('/fees', methods=['POST'])
-@jwt_required()
-@role_required(['admin'])
-def create_fee():
-    """Create a new fee record"""
-    data = request.get_json()
+@admin_bp.route('/api/admin/fees', methods=['GET'])
+@token_required
+def get_all_fees(current_user):
+    """Get all fee details for admin"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
     
     try:
-        # Validate required fields
-        if not data.get('student_id'):
-            return jsonify({"error": "Student ID is required"}), 400
-        if not data.get('amount'):
-            return jsonify({"error": "Amount is required"}), 400
-        if not data.get('due_date'):
-            return jsonify({"error": "Due date is required"}), 400
-        
-        # Find student by student_id (not database id)
-        student = Student.query.filter_by(student_id=data['student_id']).first()
-        if not student:
-            return jsonify({"error": "Student not found"}), 404
-        
-        # Generate challan number if not provided
-        challan_number = data.get('challan_number')
-        if not challan_number:
-            # Generate unique challan number
-            import random
-            challan_number = f"CH-{datetime.now().year}-{random.randint(1000, 9999)}"
-        
-        # Check if challan number exists
-        if Fee.query.filter_by(challan_number=challan_number).first():
-            return jsonify({"error": "Challan number already exists"}), 400
-        
-        fee = Fee(
-            student_id=student.id,
-            challan_number=challan_number,
-            amount=float(data['amount']),
-            due_date=datetime.strptime(data['due_date'], '%Y-%m-%d').date(),
-            semester=data.get('semester', ''),
-            description=data.get('description', ''),
-            status='pending'
-        )
-        
-        db.session.add(fee)
-        db.session.commit()
+        query = """
+            SELECT f.*, s.student_code, s.first_name, s.last_name
+            FROM fee_details f
+            JOIN students s ON f.student_id = s.student_id
+            ORDER BY f.due_date DESC
+        """
+        fees = execute_query(query)
         
         return jsonify({
-            "message": "Fee record created successfully",
-            "id": fee.id,
-            "challan_number": fee.challan_number
-        }), 201
+            'success': True,
+            'data': {
+                'fees': fees
+            }
+        }), 200
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-@bp.route('/fees/<int:fee_id>/mark-paid', methods=['PUT'])
-@jwt_required()
-@role_required(['admin'])
-def mark_fee_paid(fee_id):
-    """Mark a fee as paid"""
+
+@admin_bp.route('/api/admin/fees', methods=['POST'])
+@token_required
+def add_fee_record(current_user):
+    """Add new fee record for student"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
     try:
-        fee = Fee.query.get(fee_id)
+        data = request.get_json()
+        student_id = data.get('student_id')
+        semester = data.get('semester')
+        tuition_fee = data.get('tuition_fee', 0)
+        lab_fee = data.get('lab_fee', 0)
+        miscellaneous_fee = data.get('miscellaneous_fee', 0)
+        due_date = data.get('due_date')
         
-        if not fee:
-            return jsonify({"error": "Fee record not found"}), 404
+        if not all([student_id, semester, due_date]):
+            return jsonify({'success': False, 'message': 'Student ID, semester and due date are required'}), 400
         
-        if fee.status == 'paid':
-            return jsonify({"message": "Fee is already marked as paid"}), 200
+        success = StudentModel.add_fee_record(student_id, semester, tuition_fee, lab_fee, miscellaneous_fee, due_date)
         
-        fee.status = 'paid'
-        fee.paid_date = datetime.now().date()
-        
-        db.session.commit()
-        
-        return jsonify({"message": "Fee marked as paid successfully"}), 200
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Fee record added successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to add fee record'
+            }), 400
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-@bp.route('/fees/<int:fee_id>', methods=['DELETE'])
-@jwt_required()
-@role_required(['admin'])
-def delete_fee(fee_id):
-    """Delete a fee record"""
+
+@admin_bp.route('/api/admin/fees/<int:fee_id>/mark-paid', methods=['PUT'])
+@token_required
+def mark_fee_paid(current_user, fee_id):
+    """Mark fee as paid"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
     try:
-        fee = Fee.query.get(fee_id)
+        success = StudentModel.mark_fee_paid(fee_id)
         
-        if not fee:
-            return jsonify({"error": "Fee record not found"}), 404
-        
-        db.session.delete(fee)
-        db.session.commit()
-        
-        return jsonify({"message": "Fee record deleted successfully"}), 200
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Fee marked as paid successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to mark fee as paid'
+            }), 400
         
     except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
-# ==================== DEPARTMENTS (Mock endpoint) ====================
 
-@bp.route('/departments', methods=['GET'])
-@jwt_required()
-@role_required(['admin'])
-def get_departments():
-    """Get all departments - Mock implementation"""
-    # Since you don't have a departments table, return hardcoded departments
-    # Or you can get unique batches/departments from students
+@admin_bp.route('/api/admin/fees/breakdown', methods=['GET'])
+@token_required
+def get_fee_breakdown(current_user):
+    """Get fee breakdown for admin"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
     try:
-        departments = [
-            {"id": "CS", "name": "Computer Science", "code": "CS", "description": "Computer Science Department"},
-            {"id": "EE", "name": "Electrical Engineering", "code": "EE", "description": "Electrical Engineering Department"},
-            {"id": "ME", "name": "Mechanical Engineering", "code": "ME", "description": "Mechanical Engineering Department"},
-            {"id": "CE", "name": "Civil Engineering", "code": "CE", "description": "Civil Engineering Department"},
-            {"id": "BBA", "name": "Business Administration", "code": "BBA", "description": "Business Administration Department"},
-        ]
+        fees = StudentModel.get_all_fee_details()
         
-        return jsonify({"departments": departments}), 200
+        return jsonify({
+            'success': True,
+            'data': {
+                'fees': fees
+            }
+        }), 200
+        
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# ==================== LEAVE MANAGEMENT ====================
+
+@admin_bp.route('/api/admin/leaves', methods=['GET'])
+@token_required
+def get_all_leaves(current_user):
+    """Get all faculty leave requests"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        query = """
+            SELECT l.*, f.faculty_code, f.first_name, f.last_name
+            FROM faculty_leaves l
+            JOIN faculty f ON l.faculty_id = f.faculty_id
+            ORDER BY l.applied_at DESC
+        """
+        leaves = execute_query(query)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'leaves': leaves
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/leaves/pending', methods=['GET'])
+@token_required
+def get_pending_leaves(current_user):
+    """Get all pending leave requests"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        query = """
+            SELECT 
+                fl.leave_id,
+                fl.faculty_id,
+                f.faculty_code,
+                CONCAT(f.first_name, ' ', f.last_name) as faculty_name,
+                d.dept_name,
+                fl.leave_date,
+                fl.reason,
+                fl.status,
+                fl.applied_at
+            FROM faculty_leaves fl
+            JOIN faculty f ON fl.faculty_id = f.faculty_id
+            JOIN departments d ON f.department_id = d.dept_id
+            WHERE fl.status = 'pending'
+            ORDER BY fl.applied_at DESC
+        """
+        leaves = execute_query(query)
+        
+        return jsonify({
+            'success': True,
+            'leaves': leaves
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/leaves/<int:leave_id>/<action>', methods=['PUT'])
+@token_required
+def update_leave_status(current_user, leave_id, action):
+    """Approve or reject faculty leave"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        if action not in ['approve', 'reject']:
+            return jsonify({'success': False, 'message': 'Invalid action'}), 400
+        
+        status = 'approved' if action == 'approve' else 'rejected'
+        query = "UPDATE faculty_leaves SET status = %s WHERE leave_id = %s"
+        execute_query(query, (status, leave_id), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Leave {action}d successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# ==================== FACULTY ATTENDANCE ====================
+
+@admin_bp.route('/api/admin/faculty-attendance/mark', methods=['POST'])
+@token_required
+def mark_faculty_attendance(current_user):
+    """Mark faculty attendance"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        faculty_id = data.get('faculty_id')
+        date = data.get('date')
+        session = data.get('session')
+        status = data.get('status')
+        
+        if not all([faculty_id, date, session, status]):
+            return jsonify({'success': False, 'message': 'All fields are required'}), 400
+        
+        success = AdminModel.mark_faculty_attendance(
+            faculty_id, date, session, status, current_user['user_id']
+        )
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Faculty attendance marked successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to mark attendance'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/faculty-attendance/bulk', methods=['POST'])
+@token_required
+def mark_bulk_faculty_attendance(current_user):
+    """Mark attendance for multiple faculty at once"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        attendance_date = data.get('date')
+        session = data.get('session')
+        attendance_data = data.get('attendance', [])
+        
+        if not attendance_date or not session:
+            return jsonify({'success': False, 'message': 'Date and session are required'}), 400
+        
+        for record in attendance_data:
+            faculty_id = record['faculty_id']
+            status = record['status']
+            
+            AdminModel.mark_faculty_attendance(
+                faculty_id, attendance_date, session, status, current_user['user_id']
+            )
+        
+        return jsonify({
+            'success': True,
+            'message': f'Attendance marked for {len(attendance_data)} faculty members'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/faculty-attendance/<date>', methods=['GET'])
+@token_required
+def get_faculty_attendance(current_user, date):
+    """Get faculty attendance for a specific date"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        attendance = AdminModel.get_faculty_attendance_by_date(date)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'attendance': attendance
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/faculty-attendance/summary', methods=['GET'])
+@token_required
+def get_faculty_attendance_summary(current_user):
+    """Get faculty attendance summary"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        summary = AdminModel.get_faculty_attendance_summary()
+        
+        return jsonify({
+            'success': True,
+            'summary': summary
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# ==================== COURSE MANAGEMENT ====================
+
+@admin_bp.route('/api/admin/courses', methods=['GET'])
+@token_required
+def get_all_courses_admin(current_user):
+    """Get all courses with details"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        courses = AdminModel.get_all_courses_with_details()
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'courses': courses
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/courses/<int:section_id>/students', methods=['GET'])
+@token_required
+def get_course_students_admin(current_user, section_id):
+    """Get students in a course section"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        query = """
+            SELECT s.student_id, s.student_code, s.first_name, s.last_name,
+                   e.enrollment_id, e.enrollment_date, e.status
+            FROM enrollments e
+            JOIN students s ON e.student_id = s.student_id
+            WHERE e.section_id = %s
+            ORDER BY s.first_name, s.last_name
+        """
+        students = execute_query(query, (section_id,))
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'students': students
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/course-management/students', methods=['GET'])
+@token_required
+def get_all_students_courses_admin(current_user):
+    """Get all students with their course enrollments"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        students = StudentModel.get_all_students_for_admin()
+        
+        for student in students:
+            enrollments = CourseModel.get_student_enrollments(student['student_id'])
+            student['enrollments'] = enrollments
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'students': students
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/course-management/enroll', methods=['POST'])
+@token_required
+def admin_enroll_student(current_user):
+    """Admin enrolls student in course"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        student_id = data.get('student_id')
+        section_id = data.get('section_id')
+        
+        if not student_id or not section_id:
+            return jsonify({'success': False, 'message': 'Student ID and Section ID are required'}), 400
+        
+        check_query = "SELECT * FROM enrollments WHERE student_id = %s AND section_id = %s AND status = 'enrolled'"
+        existing = execute_query(check_query, (student_id, section_id))
+        
+        if existing:
+            return jsonify({'success': False, 'message': 'Student is already enrolled in this course'}), 400
+        
+        seats_info = CourseModel.check_seats_available(section_id)
+        if not seats_info or seats_info['seats_available'] <= 0:
+            return jsonify({'success': False, 'message': 'Course is full'}), 400
+        
+        enroll_query = """
+            INSERT INTO enrollments (student_id, section_id, enrollment_date, status)
+            VALUES (%s, %s, CURDATE(), 'enrolled')
+        """
+        execute_query(enroll_query, (student_id, section_id), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Student enrolled successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/course-management/drop', methods=['POST'])
+@token_required
+def admin_drop_student(current_user):
+    """Admin drops student from course"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        enrollment_id = data.get('enrollment_id')
+        
+        if not enrollment_id:
+            return jsonify({'success': False, 'message': 'Enrollment ID is required'}), 400
+        
+        drop_query = "UPDATE enrollments SET status = 'dropped' WHERE enrollment_id = %s"
+        execute_query(drop_query, (enrollment_id,), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Student dropped from course successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# ==================== REGISTRATION PERIOD ====================
+
+@admin_bp.route('/api/admin/registration-period', methods=['POST'])
+@token_required
+def set_registration_period(current_user):
+    """Set course registration period"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        semester = data.get('semester')
+        year = data.get('year')
+        start_date = data.get('start_date')
+        end_date = data.get('end_date')
+        is_active = data.get('is_active', True)
+        
+        if not all([semester, year, start_date, end_date]):
+            return jsonify({'success': False, 'message': 'All fields are required'}), 400
+        
+        query = """
+            INSERT INTO registration_periods (semester, year, start_date, end_date, is_active)
+            VALUES (%s, %s, %s, %s, %s)
+            ON DUPLICATE KEY UPDATE 
+            start_date = %s, end_date = %s, is_active = %s
+        """
+        execute_query(query, (semester, year, start_date, end_date, is_active, 
+                             start_date, end_date, is_active), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Registration period for {semester} {year} set successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/registration-period/current', methods=['GET'])
+def get_current_registration_period():
+    """Get current active registration period"""
+    try:
+        query = "SELECT * FROM registration_periods WHERE is_active = TRUE LIMIT 1"
+        result = execute_query(query)
+        
+        if result:
+            return jsonify({
+                'success': True,
+                'data': result[0]
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'No active registration period'
+            }), 404
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# ==================== ANNOUNCEMENTS ====================
+
+@admin_bp.route('/api/admin/announcements', methods=['GET'])
+@token_required
+def get_admin_announcements(current_user):
+    """Get all admin announcements"""
+    try:
+        query = """
+            SELECT a.*, u.username as created_by_name
+            FROM admin_announcements a
+            JOIN users u ON a.created_by = u.user_id
+            WHERE a.is_active = TRUE
+            ORDER BY a.created_at DESC
+        """
+        announcements = execute_query(query)
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'announcements': announcements
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/announcements', methods=['POST'])
+@token_required
+def create_admin_announcement(current_user):
+    """Create new admin announcement"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        title = data.get('title')
+        message = data.get('message')
+        announcement_type = data.get('type', 'general')
+        
+        if not title or not message:
+            return jsonify({'success': False, 'message': 'Title and message are required'}), 400
+        
+        query = """
+            INSERT INTO admin_announcements (title, message, type, created_by)
+            VALUES (%s, %s, %s, %s)
+        """
+        execute_query(query, (title, message, announcement_type, current_user['user_id']), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Announcement created successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+@admin_bp.route('/api/admin/announcements/<int:announcement_id>', methods=['DELETE'])
+@token_required
+def delete_admin_announcement(current_user, announcement_id):
+    """Delete admin announcement"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        query = "DELETE FROM admin_announcements WHERE announcement_id = %s"
+        execute_query(query, (announcement_id,), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Announcement deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
+# ==================== DEBUG ROUTES ====================
+
+@admin_bp.route('/api/debug/student-data/<int:student_id>', methods=['GET'])
+@token_required
+def debug_student_data(current_user, student_id):
+    """Debug student data issues"""
+    try:
+        student_query = "SELECT * FROM students WHERE student_id = %s"
+        student = execute_query(student_query, (student_id,))
+        
+        enrollments_query = """
+            SELECT e.*, cs.section_code, c.course_code, c.course_name
+            FROM enrollments e
+            JOIN course_sections cs ON e.section_id = cs.section_id
+            JOIN courses c ON cs.course_id = c.course_id
+            WHERE e.student_id = %s
+        """
+        enrollments = execute_query(enrollments_query, (student_id,))
+        
+        marks_query = """
+            SELECT m.*, e.enrollment_id, c.course_code
+            FROM marks m
+            JOIN enrollments e ON m.enrollment_id = e.enrollment_id
+            JOIN course_sections cs ON e.section_id = cs.section_id
+            JOIN courses c ON cs.course_id = c.course_id
+            WHERE e.student_id = %s
+        """
+        marks = execute_query(marks_query, (student_id,))
+        
+        return jsonify({
+            'success': True,
+            'debug': {
+                'student': student[0] if student else None,
+                'enrollments': enrollments,
+                'marks': marks,
+                'enrollment_count': len(enrollments),
+                'marks_count': len(marks)
+            }
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500

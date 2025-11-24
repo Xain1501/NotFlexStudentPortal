@@ -1,5 +1,6 @@
 """
 Flask App Initialization
+Place this in: website/__init__.py
 """
 
 from flask import Flask
@@ -22,18 +23,13 @@ def create_app():
          methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
          allow_headers=['Content-Type', 'Authorization'])
     
-    # Register main blueprints
-    from website.auth import auth
-    from website.views import views
+    # Register all route blueprints from routes folder
+    from website.routes import auth_bp, student_bp, faculty_bp, course_bp, admin_bp
     
-    app.register_blueprint(auth, url_prefix='/')
-    app.register_blueprint(views, url_prefix='/')
-    
-    # Register route blueprints from routes folder
-    from website.routes import student_bp, faculty_bp, course_bp
-    
+    app.register_blueprint(auth_bp, url_prefix='/')
     app.register_blueprint(student_bp, url_prefix='/')
     app.register_blueprint(faculty_bp, url_prefix='/')
     app.register_blueprint(course_bp, url_prefix='/')
+    app.register_blueprint(admin_bp, url_prefix='/')
     
     return app

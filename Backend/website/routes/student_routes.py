@@ -3,8 +3,8 @@ Student Routes - All student-related API endpoints
 """
 
 from flask import Blueprint, request, jsonify
-from models import StudentModel, CourseModel
-from auth import token_required
+from ..models import StudentModel, CourseModel
+from .auth_routes import token_required
 
 student_bp = Blueprint('student', __name__)
 
