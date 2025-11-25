@@ -1,0 +1,42 @@
+@startuml
+title Main Architecture - University Student Portal
+
+skinparam rectangle {
+    BorderColor black
+    BorderThickness 1
+    RoundCorner 15
+}
+skinparam shadowing false
+
+rectangle "Frontend (React Web Application)" {
+    rectangle "Student Module"
+    rectangle "Faculty Module"
+    rectangle "Admin Module"
+}
+
+rectangle "Backend Services" {
+    rectangle "Student Service"
+    rectangle "Authentication Service"
+    rectangle "Faculty Service"
+    rectangle "Admin Service"
+}
+
+rectangle "Database" {
+    rectangle "MySQL Database"
+}
+
+"Student Module" --> "Student Service"
+"Student Module" --> "Authentication Service"
+
+"Faculty Module" --> "Faculty Service"
+"Faculty Module" --> "Authentication Service"
+
+"Admin Module" --> "Admin Service"
+"Admin Module" --> "Authentication Service"
+
+"Student Service" --> "MySQL Database"
+"Authentication Service" --> "MySQL Database"
+"Faculty Service" --> "MySQL Database"
+"Admin Service" --> "MySQL Database"
+
+@enduml

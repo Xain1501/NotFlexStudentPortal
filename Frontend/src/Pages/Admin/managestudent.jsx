@@ -1,45 +1,17 @@
+// src/pages/admin/ManageStudents.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./adminhome.css";
 
-const STUDENTS_KEY = "students_store";
-const DEPTS_KEY = "departments_store";
-const PAGE_SIZE = 10;
+import {
+  fetchStudents,
+  createStudent,
+  updateStudent,
+  removeStudent,
+  fetchDepartments,
+} from "../../api/admin";
 
-function loadStudentsRaw() {
-  try {
-    const raw = localStorage.getItem(STUDENTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error("loadStudentsRaw parse error", e);
-    return [];
-  }
-}
-function saveStudents(list) {
-  try {
-    localStorage.setItem(STUDENTS_KEY, JSON.stringify(list));
-    window.dispatchEvent(new Event("storage"));
-  } catch (e) {
-    console.error("saveStudents write error", e);
-  }
-}
-function loadDepts() {
-  try {
-    const raw = localStorage.getItem(DEPTS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error("loadDepts parse error", e);
-    return [];
-  }
-}
-function saveDepts(list) {
-  try {
-    localStorage.setItem(DEPTS_KEY, JSON.stringify(list));
-    window.dispatchEvent(new Event("storage"));
-  } catch (e) {
-    console.error("saveDepts write error", e);
-  }
-}
+const PAGE_SIZE = 10;
 
 function normalize(v) {
   return v == null ? "" : String(v).trim();
@@ -56,8 +28,6 @@ function makeIdFromName(name) {
     .join("")
     .toUpperCase();
 }
-
-// Create dept records from free-text names (avoid collisions with existing)
 function buildDepartmentsFromNames(names, existing = []) {
   const out = existing.slice();
   const existingIds = new Set(out.map((d) => normalizeKey(d.id)));
@@ -81,8 +51,6 @@ function buildDepartmentsFromNames(names, existing = []) {
   });
   return out;
 }
-
-// Build lookup for matching by id/name/code
 function buildDeptLookup(depts = []) {
   const map = new Map();
   (depts || []).forEach((d) => {
@@ -107,71 +75,83 @@ export default function ManageStudents() {
   });
   const [editingId, setEditingId] = useState(null);
   const [collapsed, setCollapsed] = useState({});
-  // pagination per-section-per-department keyed by `${deptId}::${sectionKey}`
   const [pageByGroup, setPageByGroup] = useState({});
-  // unassigned sections also use same grouping approach under deptId = "__unassigned__"
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function initLoadAndNormalize() {
-    const rawDepts = loadDepts();
-    const rawStudents = loadStudentsRaw();
+  // Fetch students & departments from API
+  async function loadFromApi() {
+    setLoading(true);
+    setError("");
+    try {
+      // departments first (so we can normalize student dept ids)
+      const deptRes = await fetchDepartments();
+      let depts = [];
+      if (deptRes && deptRes.success) {
+        // some APIs use data.departments
+        depts = deptRes.data?.departments || deptRes.data || [];
+      }
 
-    let depts = rawDepts || [];
+      // if no departments returned but students have free-text dept names, we'll try to recover later
+      const studRes = await fetchStudents();
+      let studs = [];
+      if (studRes && studRes.success) {
+        studs = studRes.data?.students || studRes.data || [];
+      }
 
-    // If no departments but students have free-text department names, attempt recovery
-    if ((!depts || depts.length === 0) && rawStudents && rawStudents.length) {
-      const nameSet = new Set();
-      rawStudents.forEach((s) => {
+      // if no depts but students contain free-text department names, build them
+      if ((!depts || depts.length === 0) && studs && studs.length) {
+        const nameSet = new Set();
+        studs.forEach((s) => {
+          const free = normalize(s.department || s.Department || "");
+          if (free) nameSet.add(free);
+        });
+        const names = Array.from(nameSet);
+        if (names.length) {
+          depts = buildDepartmentsFromNames(names, depts);
+          // NOTE: we are not saving departments to backend here — inform admin to create them persistently if needed
+        }
+      }
+
+      setDepartments(depts);
+
+      // lookup
+      const lookup = buildDeptLookup(depts);
+
+      // normalize students -> ensure departmentId is set
+      const normalized = (studs || []).map((s) => {
+        if (s.departmentId && lookup.has(normalizeKey(s.departmentId))) {
+          return {
+            ...s,
+            departmentId: lookup.get(normalizeKey(s.departmentId)),
+          };
+        }
         const free = normalize(s.department || s.Department || "");
-        if (free) nameSet.add(free);
+        if (free && lookup.has(normalizeKey(free))) {
+          return {
+            ...s,
+            departmentId: lookup.get(normalizeKey(free)),
+            department: undefined,
+            Department: undefined,
+          };
+        }
+        return { ...s, departmentId: s.departmentId || "" };
       });
-      const names = Array.from(nameSet);
-      if (names.length) {
-        depts = buildDepartmentsFromNames(names, depts);
-        saveDepts(depts);
-      }
+
+      setStudents(normalized);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load students/departments from server.");
+    } finally {
+      setLoading(false);
     }
-
-    setDepartments(depts);
-
-    // build lookup
-    const lookup = buildDeptLookup(depts);
-
-    // Normalize students => set departmentId where possible
-    let updated = 0;
-    const normalized = (rawStudents || []).map((s) => {
-      if (s.departmentId && lookup.has(normalizeKey(s.departmentId))) {
-        return { ...s, departmentId: lookup.get(normalizeKey(s.departmentId)) };
-      }
-      const free = normalize(s.department || s.Department || "");
-      if (free && lookup.has(normalizeKey(free))) {
-        updated++;
-        return {
-          ...s,
-          departmentId: lookup.get(normalizeKey(free)),
-          department: undefined,
-          Department: undefined,
-        };
-      }
-      return { ...s, departmentId: s.departmentId || "" };
-    });
-
-    if (updated || JSON.stringify(normalized) !== JSON.stringify(rawStudents)) {
-      saveStudents(normalized);
-    }
-
-    setStudents(normalized);
   }
 
   useEffect(() => {
-    initLoadAndNormalize();
-
-    // update when other parts of app change localStorage
-    const handler = () => initLoadAndNormalize();
-    window.addEventListener("storage", handler);
-    return () => window.removeEventListener("storage", handler);
+    loadFromApi();
   }, []);
 
-  // grouping logic -> now nested by department -> section
+  // grouping logic (same as your original)
   const { nestedGroups, deptOrder, unassignedNested } = useMemo(() => {
     const deptMap = {}; // deptId -> { section -> [students] }
     const seenOrder = new Set();
@@ -179,7 +159,6 @@ export default function ManageStudents() {
     (students || []).forEach((s) => {
       const deptId = s.departmentId || ""; // empty => unassigned
       const sectionRaw = normalize(s.section) || "(No section)";
-      // decide group container
       const containerId = deptId || "__unassigned__";
       if (!deptMap[containerId]) deptMap[containerId] = {};
       if (!deptMap[containerId][sectionRaw])
@@ -188,16 +167,13 @@ export default function ManageStudents() {
       if (deptId) seenOrder.add(deptId);
     });
 
-    // ensure department order follows departments array where possible
     const deptIdsInOrder = (departments || [])
       .map((d) => d.id)
       .filter((id) => seenOrder.has(id));
-    // append any other dept ids seen in students but not present in departments
     Array.from(seenOrder).forEach((id) => {
       if (!deptIdsInOrder.includes(id)) deptIdsInOrder.push(id);
     });
 
-    // sort sections in each dept
     Object.keys(deptMap).forEach((container) => {
       const sections = Object.keys(deptMap[container]);
       sections.forEach((sec) =>
@@ -207,10 +183,8 @@ export default function ManageStudents() {
       );
     });
 
-    // build unassigned nested separately for clarity (container id "__unassigned__")
     const unassigned = deptMap["__unassigned__"] || {};
 
-    // nestedGroups should have deptId keys (only real departments), mapping sections -> list
     const nested = {};
     deptIdsInOrder.forEach((id) => {
       nested[id] = deptMap[id] || {};
@@ -233,48 +207,81 @@ export default function ManageStudents() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function handleAdd(e) {
+  async function handleAdd(e) {
     e.preventDefault();
+    setError("");
     const id = editingId || Date.now().toString();
     if (!form.name.trim() || !form.rollNo.trim())
       return alert("Name and Roll No are required.");
     if (!form.departmentId)
       return alert("Please select a Department from the Departments page.");
-    const payload = { ...form, id, status: form.status || "Active" };
-    const newList = editingId
-      ? students.map((s) => (s.id === editingId ? { ...s, ...payload } : s))
-      : [{ ...payload }, ...students];
-    saveStudents(newList);
-    setStudents(newList);
-    setForm({ id: "", name: "", section: "", rollNo: "", departmentId: "" });
-    setEditingId(null);
+    const payload = {
+      // adapt fields to expected backend columns:
+      student_code: form.rollNo,
+      first_name: form.name.split(" ")[0] || form.name,
+      last_name: form.name.split(" ").slice(1).join(" ") || "",
+      section: form.section || "",
+      department_id: form.departmentId,
+    };
+
+    try {
+      setLoading(true);
+      if (editingId) {
+        // update
+        const res = await updateStudent(editingId, payload);
+        if (!res.success) throw new Error(res.message || "Update failed");
+      } else {
+        const res = await createStudent(payload);
+        if (!res.success) throw new Error(res.message || "Create failed");
+      }
+      // refresh list from server
+      await loadFromApi();
+      setForm({ id: "", name: "", section: "", rollNo: "", departmentId: "" });
+      setEditingId(null);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Save failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleEdit(s) {
-    setEditingId(s.id);
+    setEditingId(s.id || s.student_id || s.enrollment_id || s._id);
     setForm({
-      id: s.id,
-      name: s.name,
-      section: s.section,
-      rollNo: s.rollNo,
-      departmentId: s.departmentId || "",
+      id: s.id || s.student_id || s.enrollment_id || s._id,
+      name:
+        `${s.first_name || ""}${s.last_name ? " " + s.last_name : ""}`.trim() ||
+        s.name ||
+        "",
+      section: s.section || "",
+      rollNo: s.student_code || s.rollNo || "",
+      departmentId: s.departmentId || s.department_id || "",
       status: s.status || "Active",
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!confirm("Delete this student?")) return;
-    const newList = students.filter((s) => s.id !== id);
-    saveStudents(newList);
-    setStudents(newList);
+    setError("");
+    try {
+      setLoading(true);
+      const res = await removeStudent(id);
+      if (!res.success) throw new Error(res.message || "Delete failed");
+      await loadFromApi();
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Delete failed");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function toggleCollapse(id) {
     setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  // page key helper: deptId may be "__unassigned__"
   function makePageKey(containerId, section) {
     const sec = section || "(No section)";
     return `${containerId}::${sec}`;
@@ -283,15 +290,11 @@ export default function ManageStudents() {
     const key = makePageKey(containerId, section);
     setPageByGroup((prev) => ({ ...prev, [key]: page }));
   }
-
-  // pagination helpers for slicing arrays
   function paginate(list, page) {
     const p = Math.max(1, page || 1);
     const start = (p - 1) * PAGE_SIZE;
     return list.slice(start, start + PAGE_SIZE);
   }
-
-  // render helper for a single section table
   function renderSectionTable(containerId, sectionName, items) {
     const key = makePageKey(containerId, sectionName);
     const totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
@@ -318,11 +321,15 @@ export default function ManageStudents() {
             </thead>
             <tbody>
               {visible.map((s) => (
-                <tr key={s.id}>
-                  <td>{s.name}</td>
-                  <td>{s.rollNo}</td>
+                <tr key={s.id || s.student_id || s._id}>
+                  <td>
+                    {s.first_name
+                      ? `${s.first_name} ${s.last_name || ""}`
+                      : s.name}
+                  </td>
+                  <td>{s.student_code || s.rollNo}</td>
                   <td>{s.section}</td>
-                  <td>{deptName(s.departmentId)}</td>
+                  <td>{deptName(s.departmentId || s.department_id)}</td>
                   <td>{s.status || "Active"}</td>
                   <td>
                     <button
@@ -333,7 +340,9 @@ export default function ManageStudents() {
                     </button>
                     <button
                       className="btn btn-sm btn-outline-danger"
-                      onClick={() => handleDelete(s.id)}
+                      onClick={() =>
+                        handleDelete(s.id || s.student_id || s._id)
+                      }
                     >
                       Delete
                     </button>
@@ -428,18 +437,25 @@ export default function ManageStudents() {
           </div>
 
           <div className="col-md-2 mb-2 d-grid">
-            <button className="btn btn-primary" type="submit">
-              {editingId ? "Update" : "Add"}
+            <button
+              className="btn btn-primary"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? "Saving..." : editingId ? "Update" : "Add"}
             </button>
           </div>
         </div>
       </form>
 
+      {error && <div className="alert alert-danger">{error}</div>}
+
       <div className="card">
         <div className="card-body">
           <h5>Students</h5>
 
-          {/* Unassigned students grouped by section */}
+          {loading && <div className="text-muted mb-3">Loading...</div>}
+
           {Object.keys(unassignedNested).length > 0 && (
             <div className="mb-4">
               <div className="mb-2">
@@ -465,7 +481,6 @@ export default function ManageStudents() {
             </div>
           )}
 
-          {/* Departments -> sections */}
           {deptOrder.map((deptId) => {
             const sectionsMap = nestedGroups[deptId] || {};
             const totalCount = Object.values(sectionsMap).reduce(
