@@ -18,6 +18,7 @@ function loadFaculty() {
 function saveFaculty(list) {
   try {
     localStorage.setItem(FACULTY_KEY, JSON.stringify(list));
+    // notify other components
     window.dispatchEvent(new Event("storage"));
   } catch (e) {
     console.error("saveFaculty error:", e);
@@ -34,9 +35,23 @@ function loadDepts() {
 }
 
 export default function ManageFaculty() {
+  // faculty items stored in localStorage (unchanged) but now we keep all fields from the schema
   const [faculty, setFaculty] = useState([]);
   const [departments, setDepartments] = useState([]);
-  const [form, setForm] = useState({ id: "", name: "", departmentId: "", employeeId: "" });
+
+  // expanded form to capture fields that align with your SQL schema
+  const [form, setForm] = useState({
+    id: "",
+    user_id: "",        // optional
+    faculty_code: "",   // unique code
+    first_name: "",
+    last_name: "",
+    departmentId: "",
+    phone: "",
+    salary: "",
+    status: "active",
+  });
+
   const [editingId, setEditingId] = useState(null);
   const [collapsed, setCollapsed] = useState({});
   const [pageByDept, setPageByDept] = useState({});
@@ -44,12 +59,10 @@ export default function ManageFaculty() {
 
   useEffect(() => {
     function init() {
-      const depts = loadDepts();
-      setDepartments(depts);
+      setDepartments(loadDepts());
       setFaculty(loadFaculty());
     }
     init();
-
     const handler = () => init();
     window.addEventListener("storage", handler);
     return () => window.removeEventListener("storage", handler);
@@ -62,24 +75,59 @@ export default function ManageFaculty() {
 
   function handleAdd(e) {
     e.preventDefault();
-    if (!form.name.trim()) return alert("Name is required.");
+    // validate required fields
+    if (!form.faculty_code.trim()) return alert("Faculty code is required.");
+    if (!form.first_name.trim()) return alert("First name is required.");
+    if (!form.last_name.trim()) return alert("Last name is required.");
     if (!form.departmentId) return alert("Please select a Department.");
 
     const id = editingId || Date.now().toString();
-    const payload = { ...form, id, status: form.status || "Active" };
+    const payload = {
+      id,
+      user_id: form.user_id || "",
+      faculty_code: form.faculty_code,
+      first_name: form.first_name,
+      last_name: form.last_name,
+      departmentId: form.departmentId,
+      phone: form.phone || "",
+      salary: form.salary || "",
+      status: form.status || "active",
+    };
+
     const newList = editingId
       ? faculty.map(f => f.id === editingId ? { ...f, ...payload } : f)
       : [payload, ...faculty];
 
     saveFaculty(newList);
     setFaculty(newList);
-    setForm({ id: "", name: "", departmentId: "", employeeId: "" });
+    setForm({
+      id: "",
+      user_id: "",
+      faculty_code: "",
+      first_name: "",
+      last_name: "",
+      departmentId: "",
+      phone: "",
+      salary: "",
+      status: "active",
+    });
     setEditingId(null);
   }
 
   function handleEdit(item) {
     setEditingId(item.id);
-    setForm({ ...item });
+    // support older records that may have employeeId or name combined
+    setForm({
+      id: item.id || "",
+      user_id: item.user_id || "",
+      faculty_code: item.faculty_code || item.employeeId || "",
+      first_name: item.first_name || (item.name ? item.name.split(" ")[0] : ""),
+      last_name: item.last_name || (item.name ? item.name.split(" ").slice(1).join(" ") : ""),
+      departmentId: item.departmentId || item.department_id || "",
+      phone: item.phone || "",
+      salary: item.salary || "",
+      status: item.status || "active",
+    });
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -118,7 +166,7 @@ export default function ManageFaculty() {
     const deptIdsInOrder = (departments || []).map(d => d.id).filter(id => seenOrder.includes(id));
     seenOrder.forEach(id => { if (!deptIdsInOrder.includes(id)) deptIdsInOrder.push(id); });
 
-    Object.keys(map).forEach(k => map[k].sort((a,b) => (a.name||"").localeCompare(b.name||"")));
+    Object.keys(map).forEach(k => map[k].sort((a,b) => ((a.first_name||"") + " " + (a.last_name||"")).localeCompare((b.first_name||"") + " " + (b.last_name||""))));
 
     const unassignedList = (faculty || []).filter(f => !f.departmentId);
     return { groups: map, deptOrder: deptIdsInOrder, unassigned: unassignedList };
@@ -135,18 +183,45 @@ export default function ManageFaculty() {
 
       <form onSubmit={handleAdd} className="mb-3">
         <div className="row gx-2">
-          <div className="col-md-5 mb-2">
-            <input name="name" value={form.name} onChange={handleChange} className="form-control" placeholder="Faculty name" />
-          </div>
           <div className="col-md-3 mb-2">
-            <input name="employeeId" value={form.employeeId} onChange={handleChange} className="form-control" placeholder="Employee ID" />
+            <input name="faculty_code" value={form.faculty_code} onChange={handleChange} className="form-control" placeholder="Faculty code" />
           </div>
+
+          <div className="col-md-2 mb-2">
+            <input name="user_id" value={form.user_id} onChange={handleChange} className="form-control" placeholder="User ID (optional)" />
+          </div>
+
+          <div className="col-md-3 mb-2">
+            <input name="first_name" value={form.first_name} onChange={handleChange} className="form-control" placeholder="First name" />
+          </div>
+
+          <div className="col-md-3 mb-2">
+            <input name="last_name" value={form.last_name} onChange={handleChange} className="form-control" placeholder="Last name" />
+          </div>
+
           <div className="col-md-3 mb-2">
             <select name="departmentId" value={form.departmentId} onChange={handleChange} className="form-control">
               <option value="">Select Department</option>
-              {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+              {departments.map(d => <option key={d.id} value={d.id}>{d.name}{d.code ? ` (${d.code})` : ""}</option>)}
             </select>
           </div>
+
+          <div className="col-md-2 mb-2">
+            <input name="phone" value={form.phone} onChange={handleChange} className="form-control" placeholder="Phone" />
+          </div>
+
+          <div className="col-md-2 mb-2">
+            <input name="salary" value={form.salary} onChange={handleChange} className="form-control" placeholder="Salary" />
+          </div>
+
+          <div className="col-md-2 mb-2">
+            <select name="status" value={form.status} onChange={handleChange} className="form-control">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+              <option value="on_leave">On Leave</option>
+            </select>
+          </div>
+
           <div className="col-md-1 mb-2 d-grid">
             <button className="btn btn-primary" type="submit">{editingId ? "Update" : "Add"}</button>
           </div>
@@ -158,13 +233,14 @@ export default function ManageFaculty() {
           <div className="mb-2"><strong>Unassigned Faculty</strong> <small className="text-muted">({unassigned.length})</small></div>
           <div className="table-responsive">
             <table className="table table-bordered">
-              <thead><tr><th>Name</th><th>Employee ID</th><th>Department</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Code</th><th>Name</th><th>Department</th><th>Phone</th><th>Actions</th></tr></thead>
               <tbody>
                 {paginate(unassigned, pageUnassigned).map(f => (
                   <tr key={f.id}>
-                    <td>{f.name}</td>
-                    <td>{f.employeeId}</td>
+                    <td>{f.faculty_code}</td>
+                    <td>{`${f.first_name || ""} ${f.last_name || ""}`.trim()}</td>
                     <td></td>
+                    <td>{f.phone}</td>
                     <td>
                       <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEdit(f)}>Assign Dept</button>
                       <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(f.id)}>Delete</button>
@@ -204,14 +280,15 @@ export default function ManageFaculty() {
             {!collapsed[deptId] && (
               <div className="table-responsive">
                 <table className="table table-bordered">
-                  <thead><tr><th>Name</th><th>Employee ID</th><th>Department</th><th>Status</th><th style={{width:140}}>Actions</th></tr></thead>
+                  <thead><tr><th>Code</th><th>Name</th><th>Phone</th><th>Salary</th><th>Status</th><th style={{width:140}}>Actions</th></tr></thead>
                   <tbody>
                     {visible.map(f => (
                       <tr key={f.id}>
-                        <td>{f.name}</td>
-                        <td>{f.employeeId}</td>
-                        <td>{deptName(f.departmentId)}</td>
-                        <td>{f.status || "Active"}</td>
+                        <td>{f.faculty_code}</td>
+                        <td>{`${f.first_name || ""} ${f.last_name || ""}`.trim()}</td>
+                        <td>{f.phone}</td>
+                        <td>{f.salary}</td>
+                        <td>{f.status}</td>
                         <td>
                           <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEdit(f)}>Edit</button>
                           <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(f.id)}>Delete</button>

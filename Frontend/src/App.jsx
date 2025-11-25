@@ -15,6 +15,7 @@ import CourseRegistration from "./Pages/Student/courseregistration.jsx";
 import TeacherHome from "./Pages/Faculty/home.jsx";
 import MarkAttendance from "./Pages/Faculty/attendance.jsx";
 import Leave from "./Pages/Faculty/leaveapplication.jsx";
+import FacultyAttendanceitself from "./Pages/Faculty/facultyattendance.jsx";
 import UpdateMarks from "./Pages/Faculty/marks.jsx";
 // NOTE: removed the stray import that didn't assign a component:
 // import "./Pages/Faculty/timetable.jsx";
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="attendance" element={<MarkAttendance />} />
         <Route path="leave" element={<Leave />} />
         <Route path="marks" element={<UpdateMarks />} />
+        <Route path="facultyattendance" element={<FacultyAttendanceitself />} />
         <Route path="timetable" element={<Timetable />} />
       </Route>
 
