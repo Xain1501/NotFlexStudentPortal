@@ -1,0 +1,39 @@
+@startuml
+title Layered Architecture - University Student Portal
+
+skinparam rectangle {
+    BorderColor black
+    BorderThickness 1
+    RoundCorner 15
+}
+skinparam shadowing false
+
+rectangle "Presentation Layer" {
+    rectangle "React UI Components"
+}
+
+rectangle "Application Layer" {
+    rectangle "Flask API Controllers"
+    rectangle "Request Validation"
+}
+
+rectangle "Business Layer" {
+    rectangle "Business Rules Engine"
+    rectangle "Domain Logic"
+}
+
+rectangle "Data Access Layer" {
+    rectangle "MySQL Repository"
+}
+
+rectangle "Database Layer" {
+    rectangle "MySQL Database"
+}
+
+"React UI Components" --> "Flask API Controllers"
+"Flask API Controllers" --> "Request Validation"
+"Request Validation" --> "Business Rules Engine"
+"Business Rules Engine" --> "MySQL Repository"
+"MySQL Repository" --> "MySQL Database"
+
+@enduml

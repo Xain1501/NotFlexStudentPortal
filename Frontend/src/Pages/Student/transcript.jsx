@@ -8,9 +8,9 @@ export default function MarksPage() {
   const [semesterGPA] = useState(3.8);
   const [cgpa] = useState(3.7);
   const [courses] = useState([
-    { no: 1, name: "DB", credits: 3, gpa: 3.5 },
-    { no: 2, name: "CN", credits: 3, gpa: 4.0 },
-    { no: 3, name: "SDA", credits: 3, gpa: 4.0 },
+    { no: 1, name: "DB", credits: 3, gpa: 3.5, grade: "A-" },
+    { no: 2, name: "CN", credits: 3, gpa: 4.0, grade: "A" },
+    { no: 3, name: "SDA", credits: 3, gpa: 4.0, grade: "A" },
   ]);
 
   // Helper to dynamically import jspdf with fallback
@@ -145,6 +145,7 @@ export default function MarksPage() {
           <div className="meta-label">CGPA:</div>
           <div className="meta-value">{cgpa}</div>
         </div>
+
       </div>
 
     <div className="table-responsive">
@@ -155,6 +156,7 @@ export default function MarksPage() {
             <th scope="col">Course Name</th>
             <th scope="col">Credit Hours</th>
             <th scope="col">GPA</th>
+            <th scope="col">Grade</th>
           </tr>
         </thead>
         <tbody>
@@ -164,6 +166,7 @@ export default function MarksPage() {
               <td>{c.name}</td>
               <td>{c.credits}</td>
               <td>{c.gpa}</td>
+              <td>{c.grade}</td>
             </tr>
           ))}
         </tbody>

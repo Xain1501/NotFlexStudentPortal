@@ -131,7 +131,7 @@ export default function TeacherHome() {
     if (!text) return alert("Please enter announcement text.");
 
     const course = (teacher.courses || []).find(c => c.code === selectedCourseCode) || {};
-    const teacherNameToSave = teacher?.name || teacher?.fullName || "Teacher";
+    const teacherNameToSave = teacher?.firstname || teacher?.fullName || "Teacher";
 
     const ann = {
       id: Date.now().toString(),                          // unique ID
@@ -166,53 +166,34 @@ export default function TeacherHome() {
         <h2 className="page-title">Home</h2>
       </header>
 
-      <div className="row align-items-stretch teacher-cards-row">
-        <div className="col-md-4">
-          <div className="card info-card text-center h-100">
+      <div className="row w-100 justify-content-center mb-4">
+        <div className="col-md-6 d-flex mb-3">
+          <div className="card info-card text-center w-100 h-100">
             <div className="card-body d-flex flex-column">
               <h5 className="card-title accent">Personal Details</h5>
               <div className="card-content flex-grow-1">
-                <p><strong>Name:</strong> {teacher?.name || teacher?.fullName || '-'}</p>
+                <p><strong>First Name:</strong> {teacher.firstname|| '-'}</p>
+                <p><strong>Last Name:</strong> {teacher.lastname|| '-'}</p>
                 <p><strong>Employee ID:</strong> {teacher?.id || '-'}</p>
                 <p><strong>Department:</strong> {teacher?.department || '-'}</p>
                 <p><strong>Contact:</strong> {teacher?.contact || '-'}</p>
-                <p><strong>Email:</strong> {teacher?.email || '-'}</p>
-              </div>
+                <p><strong>Salary:</strong> {teacher?.salary ? `${teacher.salary} PKR` : '-'}</p>
+                <p><strong>Status:</strong> {teacher?.status || '-'}</p>
+                </div>
             </div>
           </div>
         </div>
 
-        <div className="col-md-4">
-          <div className="card info-card text-center h-100">
-            <div className="card-body d-flex flex-column">
-              <h5 className="card-title accent">Education</h5>
-              <div className="card-content flex-grow-1">
-                <p><strong>Bachelor:</strong> {teacher?.education?.bachelor || '-'}</p>
-                <p><strong>Master:</strong> {teacher?.education?.master || '-'}</p>
-                <p><strong>PhD:</strong> {teacher?.education?.phd || '-'}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
-        <div className="col-md-4">
-          <div className="card info-card text-center h-100">
+        <div className="col-md-6 d-flex mb-3">
+          <div className="card info-card text-center w-100 h-100">
             <div className="card-body d-flex flex-column">
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", width: "100%", marginBottom: 6 }}>
-                <h5 className="card-title accent" style={{ margin: 0 }}>Announcements</h5>
+                <h5 className="card-title accent" style={{ margin: 0,  padding: "1rem"  }}>Announcements</h5>
               </div>
 
-              <div className="card-content flex-grow-1" style={{ width: "100%" }}>
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-                  <button
-                    type="button"
-                    className="btn btn-outline-primary btn-sm"
-                    onClick={() => setShowForm(s => !s)}
-                    aria-expanded={showForm}
-                  >
-                    {showForm ? "Cancel" : "New Announcement"}
-                  </button>
-                </div>
+              
 
                 {showForm && (
                   <form onSubmit={handlePostAnnouncement} style={{ textAlign: "left", marginBottom: 12 }}>
@@ -231,7 +212,7 @@ export default function TeacherHome() {
                       ))}
                     </select>
 
-                    <label className="form-label" style={{ fontWeight: 600 }}>Announcement</label>
+                    <label className="form-label" style={{ fontWeight: 600}}>Announcement</label>
                     <textarea
                       value={announcementText}
                       onChange={(e) => setAnnouncementText(e.target.value)}
@@ -242,16 +223,17 @@ export default function TeacherHome() {
                     />
 
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                     
                       <button type="submit" className="btn btn-primary btn-sm">Post</button>
                     </div>
                   </form>
                 )}
 
-                <div style={{ width: "100%", textAlign: "left" }}>
+                <div style={{ width: "100%", textAlign: "center" }}>
                   {historyAnnouncements.length ? (
                     <div className="announcement-list" style={{ marginBottom: 12 }}>
                       {historyAnnouncements.map((a) => (
-                        <div key={a.id} style={{ marginBottom: 12, paddingBottom: 6, borderBottom: "1px solid #eee", position: "relative" }}>
+                        <div key={a.id} style={{ marginBottom: 12, paddingBottom: "2rem", borderBottom: "1px solid #eee", position: "relative" }}>
                           <div style={{ fontWeight: 700 }}>
                             {a.courseCode
                               ? `${a.courseCode}${a.section ? ` - ${a.section}` : ''} — ${a.author || a.teacherName || teacher?.name}`
@@ -274,12 +256,23 @@ export default function TeacherHome() {
                     </div>
                   ) : <em>No announcements</em>}
                 </div>
+                <div className="card-content flex-grow-1" style={{ width: "100%" }}>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-outline-primary btn-sm"
+                    onClick={() => setShowForm(s => !s)}
+                    aria-expanded={showForm}
+                  >
+                    {showForm ? "Cancel" : "New Announcement"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
+      </div>
       <div className="card mt-4">
         <div className="card-body">
           <h5 className="text-center accent">Courses & Sections</h5>

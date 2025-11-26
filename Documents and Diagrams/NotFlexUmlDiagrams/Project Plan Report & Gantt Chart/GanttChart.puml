@@ -1,0 +1,156 @@
+
+__@startgantt__
+title Student Portal Development Project __Timeline__
+project starts 2025-09-15
+
+[Phase 1: Project Initiation & Planning] as [P1] {
+  color LightBlue
+  lasts 15 days
+}
+
+[Phase 2: Design & Modeling] as [P2] {
+  color Wheat
+  lasts 14 days
+}
+
+[Phase 3: Development & Implementation] as [P3] {
+  color LightGreen
+  lasts 27 days
+}
+
+[Phase 4: Testing & Integration] as [P4] {
+  color LightSalmon
+  lasts 15 days
+}
+
+[Phase 5: Documentation & Deployment] as [P5] {
+  color Plum
+  lasts 31 days
+}
+
+[Phase 6: Final Submission & Demo] as [P6] {
+  color Red
+  lasts 1 day
+}
+
+' Phase 1 Tasks
+[Feasibility Analysis & Project Planning] lasts 7 days
+[SRS (IEEE Format) & ERD Creation] lasts 8 days
+[Feasibility Analysis & Project Planning] -> [SRS (IEEE Format) & ERD Creation]
+
+' Phase 2 Task
+[All UML Diagrams & Modeling] starts 2025-10-01 and lasts 14 days
+[SRS (IEEE Format) & ERD Creation] -> [All UML Diagrams & Modeling]
+
+' Phase 3 Tasks
+[__Frontend__ Development] starts 2025-10-15 and lasts 27 days
+[__Backend__ Development]  starts 2025-10-15 and lasts 27 days
+[All UML Diagrams & Modeling] -> [__Frontend__ Development]
+[All UML Diagrams & Modeling] -> [__Backend__ Development]
+
+' Phase 4 Tasks
+[Initial Testing (Front & Back)] starts 2025-11-10 and lasts 12 days
+[__Frontend__ Development] -> [Initial Testing (Front & Back)]
+[__Backend__ Development] -> [Initial Testing (Front & Back)]
+
+[Integration (Front + Back)] starts 2025-11-22 and lasts 3 days
+[Initial Testing (Front & Back)] -> [Integration (Front + Back)]
+
+' Phase 5 Tasks
+[Prepare Project Report & Artifacts] starts 2025-11-25 and lasts 20 days
+[Integration (Front + Back)] -> [Prepare Project Report & Artifacts]
+
+[Final Code & SQL Scripts Packaging] lasts 5 days
+[Prepare Project Report & Artifacts] -> [Final Code & SQL Scripts Packaging]
+
+[Hosting & Deployment] lasts 5 days
+[Final Code & SQL Scripts Packaging] -> [Hosting & Deployment]
+
+' Phase 6
+[Final Submission & Demonstration] starts 2025-12-25 and is a milestone
+[Hosting & Deployment] -> [Final Submission & Demonstration]
+
+' Link Phases
+[P1] depends on [Feasibility Analysis & Project Planning]
+[P2] depends on [All UML Diagrams & Modeling]
+[P3] depends on [__Frontend__ Development]
+[P4] depends on [Initial Testing (Front & Back)]
+[P5] depends on [Prepare Project Report & Artifacts]
+[P6] depends on [Final Submission & Demonstration]
+
+__@endgantt__
+
+fix this please so it works there are syntax errors
+
+Show more
+I'll fix the PlantUML Gantt chart syntax errors for you. There are several issues including the underscores in the title and task names, and some dependency definitions.
+
+Student Portal Gantt Chart
+Code 
+Here are the fixes I made:
+
+Removed double underscores - __@startgantt__ and __@endgantt__ should be @startgantt and @endgantt
+Fixed the title - Removed underscores from __Timeline__
+Removed task name underscores - Changed __Frontend__ and __Backend__
+
+
+How can I help you today?
+
+
+
+
+
+
+@startgantt
+title Student Portal Development Project Timeline
+project starts 2025-09-15
+
+-- Phase 1: Project Initiation & Planning --
+[Feasibility Analysis & Project Planning] lasts 7 days
+[Feasibility Analysis & Project Planning] is colored in LightBlue
+[SRS (IEEE Format) & ERD Creation] lasts 8 days
+[SRS (IEEE Format) & ERD Creation] is colored in LightBlue
+[Feasibility Analysis & Project Planning] -> [SRS (IEEE Format) & ERD Creation]
+
+-- Phase 2: Design & Modeling --
+[All UML Diagrams & Modeling] starts 2025-10-01 and lasts 14 days
+[All UML Diagrams & Modeling] is colored in Wheat
+[SRS (IEEE Format) & ERD Creation] -> [All UML Diagrams & Modeling]
+
+-- Phase 3: Development & Implementation --
+[Frontend Development] starts 2025-10-15 and lasts 27 days
+[Frontend Development] is colored in LightGreen
+[Backend Development] starts 2025-10-15 and lasts 27 days
+[Backend Development] is colored in LightGreen
+[All UML Diagrams & Modeling] -> [Frontend Development]
+[All UML Diagrams & Modeling] -> [Backend Development]
+
+-- Phase 4: Testing & Integration --
+[Initial Testing (Front & Back)] starts 2025-11-10 and lasts 12 days
+[Initial Testing (Front & Back)] is colored in LightSalmon
+[Frontend Development] -> [Initial Testing (Front & Back)]
+[Backend Development] -> [Initial Testing (Front & Back)]
+
+[Integration (Front + Back)] starts 2025-11-22 and lasts 3 days
+[Integration (Front + Back)] is colored in LightSalmon
+[Initial Testing (Front & Back)] -> [Integration (Front + Back)]
+
+-- Phase 5: Documentation & Deployment --
+[Prepare Project Report & Artifacts] starts 2025-11-25 and lasts 20 days
+[Prepare Project Report & Artifacts] is colored in Plum
+[Integration (Front + Back)] -> [Prepare Project Report & Artifacts]
+
+[Final Code & SQL Scripts Packaging] lasts 5 days
+[Final Code & SQL Scripts Packaging] is colored in Plum
+[Prepare Project Report & Artifacts] -> [Final Code & SQL Scripts Packaging]
+
+[Hosting & Deployment] lasts 5 days
+[Hosting & Deployment] is colored in Plum
+[Final Code & SQL Scripts Packaging] -> [Hosting & Deployment]
+
+-- Phase 6: Final Submission & Demo --
+[Final Submission & Demonstration] happens 2025-12-25
+[Final Submission & Demonstration] is colored in Red
+[Hosting & Deployment] -> [Final Submission & Demonstration]
+
+@endgantt

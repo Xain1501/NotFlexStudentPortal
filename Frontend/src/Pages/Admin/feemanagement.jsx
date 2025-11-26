@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { fetchStudentFees, updateStudentFee } from '../Admin/api';
 import "./adminhome.css";
 
+// Key for localStorage sync
+const FEE_STATUS_KEY = 'student_fee_status';
+
 export default function FeeManagement() {
   const [rows, setRows] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -17,16 +20,11 @@ export default function FeeManagement() {
         if (typeof fetchStudentFees === 'function') {
           data = await fetchStudentFees();
         }
-        
-
-        console.log('fetchStudentFees -> raw data:', data);
+        // You can add demo data here if needed
 
         // Enhanced normalization to catch all fee variations
         const normalized = (data || []).map(r => {
-          // Try multiple fee property names and ensure we get a valid number
           let feeValue = r.fee ?? r.fees ?? r.amount ?? r.totalFee ?? r.fee_amount ?? null;
-          
-          // If feeValue is still null/undefined, try to find any property that might contain fee
           if (feeValue == null) {
             const possibleFeeProps = Object.keys(r).filter(key => 
               key.toLowerCase().includes('fee') || 
@@ -36,7 +34,6 @@ export default function FeeManagement() {
               feeValue = r[possibleFeeProps[0]];
             }
           }
-
           return {
             ...r,
             fee: feeValue,
@@ -45,28 +42,24 @@ export default function FeeManagement() {
         });
 
         setRows(normalized);
+        // Save initial status to localStorage for student sync
+        localStorage.setItem(FEE_STATUS_KEY, JSON.stringify(normalized));
+        window.dispatchEvent(new Event('storage'));
       } catch (err) {
         console.error(err);
       }
     })();
   }, []);
 
-  // Enhanced formatAmount function
   const formatAmount = (value) => {
     if (value == null || value === '' || value === undefined) return 'N/A';
-    
-    // If it's already a number, format it directly
     if (typeof value === 'number') {
       return new Intl.NumberFormat('en-US').format(value);
     }
-    
-    // If it's a string, clean it and convert to number
     const raw = String(value);
     const cleaned = raw.replace(/[^\d.-]/g, '');
     const num = parseFloat(cleaned);
-    
     if (isNaN(num) || !isFinite(num)) return 'N/A';
-    
     return new Intl.NumberFormat('en-US').format(num);
   };
 
@@ -76,7 +69,13 @@ export default function FeeManagement() {
       if (typeof updateStudentFee === 'function') {
         await updateStudentFee({ roll, status: newStatus });
       }
-      setRows(prev => prev.map(r => r.roll === roll ? { ...r, status: newStatus } : r));
+      setRows(prev => {
+        const updated = prev.map(r => r.roll === roll ? { ...r, status: newStatus } : r);
+        // Sync with localStorage
+        localStorage.setItem(FEE_STATUS_KEY, JSON.stringify(updated));
+        window.dispatchEvent(new Event('storage'));
+        return updated;
+      });
       alert('Status updated to ' + newStatus);
     } catch (err) {
       console.error(err);
@@ -106,13 +105,11 @@ export default function FeeManagement() {
                     <td>{r.roll}</td>
                     <td>{r.name}</td>
                     <td><strong>PKR {formatAmount(r.fee)}</strong></td>
-
                     <td>
                       <span className={r.status === 'Paid' ? 'text-success font-weight-bold' : 'text-danger font-weight-bold'}>
                         {r.status}
                       </span>
                     </td>
-
                     <td>
                       {isAdmin ? (
                         <div>
@@ -144,8 +141,6 @@ export default function FeeManagement() {
           </div>
         </div>
       </div>
-      
-    
     </div>
   );
 }

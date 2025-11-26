@@ -1,0 +1,318 @@
+@startuml
+!theme plain
+
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+skinparam shadowing false
+
+' ==================== CORE ENTITIES ====================
+
+class User {
+  - user_id: Integer {pk}
+  - username: String {unique}
+  - password_hash: String
+  - email: String {unique}
+  - role: Enum('student', 'faculty', 'admin')
+  - is_active: Boolean
+  - created_at: Timestamp
+  --
+  + login(username, password): User
+  + logout(): Boolean
+  + validateToken(token): Boolean
+}
+
+class Student {
+  - student_id: Integer {pk}
+  - user_id: Integer {fk}
+  - student_code: String {unique}
+  - first_name: String
+  - last_name: String
+  - date_of_birth: Date
+  - phone: String
+  - cnic: String
+  - enrollment_date: Date
+  - major_dept_id: Integer {fk}
+  - current_semester: Integer
+  - status: Enum('active', 'inactive', 'graduated')
+  --
+  + getEnrolledCourses(): List<Course>
+  + getAttendanceSummary(): List<AttendanceSummary>
+  + getTranscript(): Transcript
+  + calculateGPA(): Float
+}
+
+class Faculty {
+  - faculty_id: Integer {pk}
+  - user_id: Integer {fk}
+  - faculty_code: String {unique}
+  - first_name: String
+  - last_name: String
+  - department_id: Integer {fk}
+  - phone: String
+  - salary: Decimal
+  - status: Enum('active', 'inactive', 'on_leave')
+  --
+  + getTeachingSections(): List<CourseSection>
+  + markAttendance(studentId, sectionId, date, status): Boolean
+  + uploadMarks(enrollmentId, marksData): Boolean
+  + applyLeave(date, reason): Boolean
+}
+
+class Department {
+  - dept_id: Integer {pk}
+  - dept_code: String {unique}
+  - dept_name: String
+  --
+  + getAllDepartments(): List<Department>
+  + createDepartment(code, name): Boolean
+}
+
+' ==================== ACADEMIC ENTITIES ====================
+
+class Course {
+  - course_id: Integer {pk}
+  - course_code: String
+  - course_name: String
+  - credits: Integer
+  --
+  + getAllCourses(): List<Course>
+  + getCourseById(id): Course
+}
+
+class CourseSection {
+  - section_id: Integer {pk}
+  - course_id: Integer {fk}
+  - faculty_id: Integer {fk}
+  - section_code: String
+  - semester: Enum('Fall', 'Spring', 'Summer')
+  - year: Year
+  - schedule: String
+  - room: String
+  - max_capacity: Integer
+  --
+  + getAvailableCourses(semester, year): List<CourseSection>
+  + checkSeatsAvailable(): Object
+}
+
+class Enrollment {
+  - enrollment_id: Integer {pk}
+  - student_id: Integer {fk}
+  - section_id: Integer {fk}
+  - enrollment_date: Date
+  - status: Enum('enrolled', 'dropped', 'completed')
+  --
+  + enrollStudent(studentId, sectionId): Boolean
+  + dropCourse(studentId, sectionId): Boolean
+  + getStudentEnrollments(studentId): List<Enrollment>
+}
+
+class Marks {
+  - mark_id: Integer {pk}
+  - enrollment_id: Integer {fk, unique}
+  - quiz_marks: Decimal
+  - assignment1_marks: Decimal
+  - assignment2_marks: Decimal
+  - project_marks: Decimal
+  - midterm_marks: Decimal
+  - final_marks: Decimal
+  - quiz_total: Decimal
+  - assignment1_total: Decimal
+  - assignment2_total: Decimal
+  - project_total: Decimal
+  - midterm_total: Decimal
+  - final_total: Decimal
+  --
+  + uploadMarks(enrollmentId, marksData): Boolean
+  + calculateGrade(percentage): String
+  + calculateTotal(): Float
+}
+
+class Attendance {
+  - attendance_id: Integer {pk}
+  - student_id: Integer {fk}
+  - section_id: Integer {fk}
+  - attendance_date: Date
+  - status: Enum('present', 'absent')
+  --
+  + markAttendance(studentId, sectionId, date, status): Boolean
+  + getAttendanceByDate(sectionId, date): List<Attendance>
+}
+
+class Transcript {
+  - transcript_id: Integer {pk}
+  - student_id: Integer {fk}
+  - course_code: String
+  - course_name: String
+  - credits: Integer
+  - semester: String
+  - final_grade: String
+  - grade_points: Decimal
+  --
+  + getTranscript(studentId): List<Transcript>
+  + calculateGPA(studentId): Float
+}
+
+' ==================== ADMINISTRATION ENTITIES ====================
+
+class FeeDetails {
+  - fee_id: Integer {pk}
+  - student_id: Integer {fk}
+  - semester: String
+  - tuition_fee: Decimal
+  - lab_fee: Decimal
+  - miscellaneous_fee: Decimal
+  - amount_due: Decimal
+  - amount_paid: Decimal
+  - due_date: Date
+  - payment_date: Date
+  - status: Enum('pending', 'paid', 'overdue')
+  --
+  + addFeeRecord(studentId, semester, fees, dueDate): Boolean
+  + markFeePaid(feeId): Boolean
+  + calculateRemainingBalance(): Float
+}
+
+class FacultyLeaves {
+  - leave_id: Integer {pk}
+  - faculty_id: Integer {fk}
+  - leave_date: Date
+  - reason: Text
+  - status: Enum('pending', 'approved', 'rejected')
+  - applied_at: Timestamp
+  --
+  + applyLeave(facultyId, date, reason): Boolean
+  + approveLeave(leaveId): Boolean
+  + rejectLeave(leaveId): Boolean
+}
+
+class FacultyAttendance {
+  - attendance_id: Integer {pk}
+  - faculty_id: Integer {fk}
+  - attendance_date: Date
+  - session: Enum('Morning', 'Evening')
+  - status: Enum('present', 'absent')
+  - marked_by: Integer {fk}
+  - marked_at: Timestamp
+  --
+  + markFacultyAttendance(facultyId, date, session, status, markedBy): Boolean
+  + getFacultyAttendanceByDate(date): List<FacultyAttendance>
+}
+
+class RegistrationPeriod {
+  - period_id: Integer {pk}
+  - semester: Enum('Fall', 'Spring', 'Summer')
+  - year: Year
+  - start_date: Date
+  - end_date: Date
+  - is_active: Boolean
+  - created_at: Timestamp
+  --
+  + setRegistrationPeriod(semester, year, start, end, active): Boolean
+  + getCurrentPeriod(): RegistrationPeriod
+}
+
+class Announcements {
+  - announcement_id: Integer {pk}
+  - faculty_id: Integer {fk}
+  - section_id: Integer {fk}
+  - title: String
+  - message: Text
+  - created_at: Timestamp
+  --
+  + createAnnouncement(facultyId, sectionId, title, message): Boolean
+  + getAnnouncementsBySection(sectionId): List<Announcement>
+}
+
+class AdminAnnouncements {
+  - announcement_id: Integer {pk}
+  - title: String
+  - message: Text
+  - type: Enum('general', 'exam', 'fee', 'meeting')
+  - created_by: Integer {fk}
+  - created_at: Timestamp
+  - is_active: Boolean
+  --
+  + createAdminAnnouncement(title, message, type, createdBy): Boolean
+  + getActiveAnnouncements(): List<Announcement>
+}
+
+' ==================== SERVICE CLASSES ====================
+
+class AuthenticationService {
+  + login(username, password): LoginResponse
+  + validateToken(token): Boolean
+  + logout(token): Boolean
+  + hasRole(user, role): Boolean
+}
+
+class StudentService {
+  + getStudentByUserId(userId): Student
+  + getEnrolledCourses(studentId): List<Course>
+  + getTranscript(studentId): Transcript
+  + calculateGPA(studentId): Float
+}
+
+class FacultyService {
+  + getTeachingSections(facultyId): List<CourseSection>
+  + markAttendance(attendanceData): Boolean
+  + uploadMarks(enrollmentId, marksData): Boolean
+  + applyLeave(facultyId, date, reason): Boolean
+}
+
+class EnrollmentService {
+  + getAvailableCourses(semester, year): List<CourseSection>
+  + enrollStudent(studentId, sectionId): Boolean
+  + dropCourse(studentId, sectionId): Boolean
+  + checkSeatsAvailable(sectionId): Object
+}
+
+' ==================== RELATIONSHIPS ====================
+
+' Core User Relationships
+User ||--|| Student : "1:1"
+User ||--|| Faculty : "1:1"
+Student }o--|| Department : "belongs to"
+Faculty }o--|| Department : "belongs to"
+
+' Academic Relationships
+Course ||--o{ CourseSection : "1:M"
+Faculty ||--o{ CourseSection : "1:M"
+Student ||--o{ Enrollment : "1:M"
+CourseSection ||--o{ Enrollment : "1:M"
+Enrollment ||--|| Marks : "1:1"
+Enrollment ||--o{ Attendance : "1:M"
+Student ||--o{ Transcript : "1:M"
+
+' Administration Relationships
+Student ||--o{ FeeDetails : "1:M"
+Faculty ||--o{ FacultyLeaves : "1:M"
+Faculty ||--o{ FacultyAttendance : "1:M"
+Faculty ||--o{ Announcements : "1:M"
+CourseSection ||--o{ Announcements : "1:M"
+
+' Service Dependencies
+AuthenticationService ..> User
+StudentService ..> Student
+StudentService ..> Enrollment
+StudentService ..> Transcript
+FacultyService ..> Faculty
+FacultyService ..> CourseSection
+FacultyService ..> Marks
+EnrollmentService ..> CourseSection
+EnrollmentService ..> Enrollment
+
+' Composition Relationships (Strong ownership)
+User ||--|| Student : composition
+User ||--|| Faculty : composition
+Course ||--o{ CourseSection : composition
+Enrollment ||--|| Marks : composition
+
+' Aggregation Relationships (Weak ownership)
+Department }o--o{ Student : aggregation
+Department }o--o{ Faculty : aggregation
+
+@enduml

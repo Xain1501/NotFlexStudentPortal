@@ -88,20 +88,7 @@ export default function Leave() {
                 />
               </div>
 
-              {/* select with custom ▼ caret */}
-              <div className="form-group mx-2 select-with-arrow centered-select">
-                <label className="d-block text-center">Type</label>
-                <select
-                  className="form-control"
-                  value={form.type}
-                  onChange={e => setForm({...form, type: e.target.value})}
-                  aria-label="Leave type"
-                >
-                  <option>Casual</option>
-                  <option>Sick</option>
-                  <option>Emergency</option>
-                </select>
-              </div>
+              
             </div>
 
             {/* prominent reason area */}

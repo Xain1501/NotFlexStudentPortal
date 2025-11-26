@@ -1,15 +1,13 @@
 // demo teacher data (same shape used in previous static demo)
 const teacherData = {
   id: 'T2025-09',
-  name: 'Dr. Aisha Khan',
+  firstname: 'Dr. Aisha',
+  lastname: 'Khan',
   department: 'Computer Science',
   contact: '03001234567',
-  email: 'aisha.khan@uni.edu',
-  education: {
-    bachelor: 'BS Computer Science (ABC University)',
-    master: 'MS Software Engineering (XYZ University)',
-    phd: 'PhD Computer Science (In progress)'
-  },
+  salary: '95000',
+  status: 'Active',
+  
   
   courses: [
     {

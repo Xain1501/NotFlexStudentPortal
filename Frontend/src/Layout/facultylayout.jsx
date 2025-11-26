@@ -70,6 +70,9 @@ export default function FacultyLayout() {
       <NavLink to="/faculty/marks" className="nav-link" onClick={() => setMobileOpen(false)}>
         Student Marks
       </NavLink>
+      <NavLink to="/faculty/facultyattendance" className="nav-link" onClick={() => setMobileOpen(false)}>
+        Faculty Attendance
+      </NavLink>
       <NavLink to="/faculty/timetable" className="nav-link" onClick={() => setMobileOpen(false)}>
         Timetable
       </NavLink>
