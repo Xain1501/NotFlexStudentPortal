@@ -1,55 +1,93 @@
-// small demo API layer (in-memory). Replace with real fetch/axios calls to your app.
-import teacherData from "../Faculty/teacherData";
+/**
+ * Faculty-specific API calls - Complete with all exports
+ */
+
 import { fetchJson } from "../../api/client";
 
-// remove local fetchJson function (we use imported one).
 const base = "/faculty";
 
+/* ---------- DASHBOARD ---------- */
 export function getFacultyDashboard() {
   return fetchJson(base, "/dashboard", { method: "GET" });
 }
 
-export function applyLeave(payload) {
-  return fetchJson(base, "/leave/apply", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
+export function fetchFacultyDashboard() {
+  return getFacultyDashboard();
 }
 
-export function getLeaves() {
-  return fetchJson(base, "/leaves", { method: "GET" });
+export function getTeacher() {
+  return fetchJson(base, "/me", { method: "GET" });
+}
+
+/* ---------- COURSES ---------- */
+export function getTeachingCourses() {
+  return fetchJson(base, "/courses", { method: "GET" });
 }
 
 export function getCourseStudents(sectionId) {
   return fetchJson(base, `/courses/${sectionId}/students`, { method: "GET" });
 }
 
-// keep the in-memory helpers below if you rely on them for mock data/testing
-const delay = (ms = 200) => new Promise((res) => setTimeout(res, ms));
-
-export async function getTeacher() {
-  await delay();
-  return JSON.parse(JSON.stringify(teacherData));
+/* ---------- ATTENDANCE ---------- */
+export function getCourseAttendance(sectionId, date = null) {
+  const endpoint = date 
+    ? `/courses/${sectionId}/attendance?date=${date}`
+    : `/courses/${sectionId}/attendance`;
+  return fetchJson(base, endpoint, { method: "GET" });
 }
 
-export async function saveAttendanceRecord(rec) {
-  await delay();
-  teacherData.attendanceRecords.push(rec);
-  return { success: true };
-}
-
-export async function applyLeaveRequest(req) {
-  await delay();
-  teacherData.leaves.push({
-    ...req,
-    status: "Pending",
-    appliedAt: new Date().toISOString(),
+export function markAttendance(payload) {
+  return fetchJson(base, "/attendance/mark", {
+    method: "POST",
+    body: JSON.stringify(payload),
   });
-  return { success: true };
 }
 
-export async function saveMarksRecord(rec) {
-  await delay();
-  teacherData.marksRecords.push(rec);
-  return { success: true };
+export function markBulkAttendance(payload) {
+  return fetchJson(base, "/attendance/mark-bulk", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/* ---------- GRADING ---------- */
+export function uploadMarks(payload) {
+  return fetchJson(base, "/marks/upload", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/* ---------- ANNOUNCEMENTS ---------- */
+export function getFacultyAnnouncements() {
+  return fetchJson(base, "/announcements", { method: "GET" });
+}
+
+export function createAnnouncement(payload) {
+  return fetchJson(base, "/announcements", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+/* ---------- LEAVE MANAGEMENT ---------- */
+export function applyForLeave(payload) {
+  return fetchJson(base, "/leave/apply", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+// Add the missing export
+export function applyLeaveRequest(payload) {
+  return applyForLeave(payload);
+}
+
+export function getMyLeaves() {
+  return fetchJson(base, "/leaves", { method: "GET" });
+}
+
+/* ---------- TIMETABLE ---------- */
+export function getTimetable() {
+  return fetchJson(base, "/timetable", { method: "GET" });
 }

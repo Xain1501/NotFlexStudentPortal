@@ -1,9 +1,10 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { isAuthenticated, getCurrentUser } from "./api/client";
 import "./App.css";
 
 // Student pages
-import Login from "./Pages/Student/login.jsx";
-import StudentHome from "./Pages/Student/studentlogin.jsx";
+import Login from "./Pages/Shared/Login.jsx";
+import StudentHome from "./Pages/Student/home.jsx";
 import Transcript from "./Pages/Student/transcript.jsx";
 import StudentMarks from "./Pages/Student/marks.jsx";
 import StudentAttendance from "./Pages/Student/attendance.jsx";
@@ -16,72 +17,121 @@ import TeacherHome from "./Pages/Faculty/home.jsx";
 import MarkAttendance from "./Pages/Faculty/attendance.jsx";
 import Leave from "./Pages/Faculty/leaveapplication.jsx";
 import UpdateMarks from "./Pages/Faculty/marks.jsx";
-// NOTE: removed the stray import that didn't assign a component:
-// import "./Pages/Faculty/timetable.jsx";
-// Re-using the student Timetable component for faculty routes (or create a FacultyTimetable component if needed)
+import FacultyTimetable from "./Pages/Faculty/timetable.jsx";
 
 // Admin pages
 import AdminHome from "./Pages/Admin/adminhome.jsx";
 import ApproveLeave from "./Pages/Admin/leave.jsx";
-// Fixed file name: coursemanagement (was 'coursemangement' typo)
 import CourseManagement from "./Pages/Admin/coursemangement.jsx";
 import FeeStructure from "./Pages/Admin/feemanagement.jsx";
 import ManageStudent from "./Pages/Admin/managestudent.jsx";
 import ManageFaculty from "./Pages/Admin/managefaculty.jsx";
 import ManageDepartments from "./Pages/Admin/managedepartment.jsx";
-import AdminLogin from "./Pages/Admin/Login.jsx"; // Importing Admin Login
-
-// If you have admin pages for student marks or admin timetable, import them here.
-// import StudentMarksAdmin from "./Pages/Admin/studentmarks.jsx";
-// import TimetableAdmin from "./Pages/Admin/timetable.jsx";
+import FacultyAttendance from "./Pages/Admin/facultyattendance.jsx";
 
 // Layouts
 import StudentLayout from "./Layout/studentlayout.jsx";
 import FacultyLayout from "./Layout/facultylayout.jsx";
 import AdminLayout from "./Layout/adminlayout.jsx";
 
+// Protected Route Component
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const user = getCurrentUser();
+  
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return children;
+};
+
+// Public Route Component (redirect to dashboard if already logged in)
+const PublicRoute = ({ children }) => {
+  if (isAuthenticated()) {
+    const user = getCurrentUser();
+    switch(user.role) {
+      case 'admin':
+        return <Navigate to="/admin" replace />;
+      case 'student':
+        return <Navigate to="/student" replace />;
+      case 'faculty':
+        return <Navigate to="/faculty" replace />;
+      default:
+        return <Navigate to="/" replace />;
+    }
+  }
+  return children;
+};
+
 export default function App() {
   return (
     <Routes>
-      {/* Student area under StudentLayout */}
-      <Route path="/" element={<StudentLayout />}>
+      {/* Public Routes */}
+      <Route path="/login" element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      } />
+      
+      {/* Default route redirects to login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Student Routes */}
+      <Route path="/student" element={
+        <ProtectedRoute allowedRoles={['student']}>
+          <StudentLayout />
+        </ProtectedRoute>
+      }>
         <Route index element={<StudentHome />} />
-        <Route path="/student/transcript" element={<Transcript />} />
-        <Route path="/student/marks" element={<StudentMarks />} />
-        <Route path="/student/attendance" element={<StudentAttendance />} />
-        <Route path="/student/timetable" element={<Timetable />} />
-        <Route path="/student/feedetail" element={<FeeDetail />} />
-        <Route
-          path="/student/courseregistration"
-          element={<CourseRegistration />}
-        />
+        <Route path="transcript" element={<Transcript />} />
+        <Route path="marks" element={<StudentMarks />} />
+        <Route path="attendance" element={<StudentAttendance />} />
+        <Route path="timetable" element={<Timetable />} />
+        <Route path="fees" element={<FeeDetail />} />
+        <Route path="course-registration" element={<CourseRegistration />} />
       </Route>
-      {/* Faculty area under FacultyLayout */}
-      <Route path="faculty" element={<FacultyLayout />}>
+
+      {/* Faculty Routes */}
+      <Route path="/faculty" element={
+        <ProtectedRoute allowedRoles={['faculty']}>
+          <FacultyLayout />
+        </ProtectedRoute>
+      }>
         <Route index element={<TeacherHome />} />
         <Route path="attendance" element={<MarkAttendance />} />
         <Route path="leave" element={<Leave />} />
         <Route path="marks" element={<UpdateMarks />} />
-        <Route path="timetable" element={<Timetable />} />
+        <Route path="timetable" element={<FacultyTimetable />} />
       </Route>
-      {/* Admin area under AdminLayout */}
-      <Route path="admin" element={<AdminLayout />}>
-        <Route index element={<AdminHome />} />
-        <Route path="approveleave" element={<ApproveLeave />} />
-        <Route path="coursemanagement" element={<CourseManagement />} />
-        <Route path="feestructure" element={<FeeStructure />} />
-        <Route path="managestudent" element={<ManageStudent />} />
-        <Route path="managefaculty" element={<ManageFaculty />} />
-        <Route path="managedepartment" element={<ManageDepartments />} />
 
-        {/* Uncomment and import these when you add the pages */}
-        {/* <Route path="studentmarks" element={<StudentMarksAdmin />} /> */}
-        {/* <Route path="timetable" element={<TimetableAdmin />} /> */}
+      {/* Admin Routes */}
+      <Route path="/admin" element={
+        <ProtectedRoute allowedRoles={['admin']}>
+          <AdminLayout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<AdminHome />} />
+        <Route path="leaves" element={<ApproveLeave />} />
+        <Route path="courses" element={<CourseManagement />} />
+        <Route path="fees" element={<FeeStructure />} />
+        <Route path="students" element={<ManageStudent />} />
+        <Route path="faculty" element={<ManageFaculty />} />
+        <Route path="departments" element={<ManageDepartments />} />
+        <Route path="faculty-attendance" element={<FacultyAttendance />} />
       </Route>
-      {/* Auth */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/admin/login" element={<AdminLogin />} />{" "}
-      {/* Admin login route */}
+
+      {/* Unauthorized Page */}
+      <Route path="/unauthorized" element={
+        <div className="text-center py-5">
+          <h1>Unauthorized</h1>
+          <p>You don't have permission to access this page.</p>
+        </div>
+      } />
+
       {/* 404 fallback */}
       <Route
         path="*"

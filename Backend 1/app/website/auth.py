@@ -1,5 +1,5 @@
 """
-COMPLETE AUTH.PY - Enhanced with better error handling for frontend
+COMPLETE AUTH.PY - Fixed CORS duplication
 """
 
 from flask import Blueprint, request, jsonify
@@ -77,6 +77,15 @@ def token_required(f):
     
     return decorated
 
+# SIMPLE OPTIONS HANDLER - NO duplication
+@auth.route('/api/auth/login', methods=['OPTIONS'])
+@auth.route('/api/auth/register', methods=['OPTIONS'])
+@auth.route('/api/auth/logout', methods=['OPTIONS'])
+def handle_options():
+    """Handle OPTIONS requests for all auth endpoints"""
+    return '', 200
+
+# MAIN LOGIN ENDPOINT - Only one definition
 @auth.route('/api/auth/login', methods=['POST'])
 def login():
     """User login with enhanced response messages"""
@@ -266,99 +275,3 @@ def logout(current_user):
         'message': 'Logout successful'
     }), 200
 
-@auth.route('/api/auth/check-username/<username>', methods=['GET'])
-def check_username_availability(username):
-    """Check username availability"""
-    try:
-        user = UserModel.get_user_by_username(username)
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'available': user is None,
-                'username': username
-            }
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': 'Error checking username availability'
-        }), 500
-
-@auth.route('/api/auth/check-email/<email>', methods=['GET'])
-def check_email_availability(email):
-    """Check email availability"""
-    try:
-        result = execute_query(
-            "SELECT user_id FROM users WHERE email = %s", 
-            (email,)
-        )
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'available': len(result) == 0,
-                'email': email
-            }
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': 'Error checking email availability'
-        }), 500
-
-@auth.route('/api/auth/change-password', methods=['POST'])
-@token_required
-def change_password(current_user):
-    """Change user password"""
-    try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({
-                'success': False,
-                'message': 'No data provided'
-            }), 400
-        
-        current_password = data.get('current_password')
-        new_password = data.get('new_password')
-        
-        if not current_password or not new_password:
-            return jsonify({
-                'success': False,
-                'message': 'Current password and new password are required'
-            }), 400
-        
-        # Verify current password
-        user = UserModel.authenticate_user(current_user['username'], current_password)
-        if not user:
-            return jsonify({
-                'success': False,
-                'message': 'Current password is incorrect'
-            }), 400
-        
-        # Update password
-        update_query = "UPDATE users SET password_hash = %s WHERE user_id = %s"
-        execute_query(update_query, (new_password, current_user['user_id']), fetch=False)
-        
-        return jsonify({
-            'success': True,
-            'message': 'Password updated successfully'
-        }), 200
-        
-    except Exception as e:
-        return jsonify({
-            'success': False,
-            'message': 'Error changing password'
-        }), 500
-
-# Add this method to UserModel if not present:
-"""
-@staticmethod
-def get_user_by_username(username):
-    query = "SELECT * FROM users WHERE username = %s"
-    result = execute_query(query, (username,))
-    return result[0] if result else None
-"""

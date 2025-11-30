@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
-import "./studentlogin.css";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import "./home.css";
+import "bootstrap/dist/css/bootstrap.min.css";
 
 // Student info
 const studentDetails = {
@@ -18,9 +18,27 @@ const studentDetails = {
 
 // Courses info: 3-credit hour, 48 classes, 9 absences allowed
 const enrolledCourses = [
-  { code: "CS301", name: "Data Structures", absentClasses: 3, totalClasses: 48, allowedAbsences: 9 },
-  { code: "CS302", name: "Operating Systems", absentClasses: 2, totalClasses: 48, allowedAbsences: 9 },
-  { code: "CS303", name: "Databases", absentClasses: 5, totalClasses: 48, allowedAbsences: 9 },
+  {
+    code: "CS301",
+    name: "Data Structures",
+    absentClasses: 3,
+    totalClasses: 48,
+    allowedAbsences: 9,
+  },
+  {
+    code: "CS302",
+    name: "Operating Systems",
+    absentClasses: 2,
+    totalClasses: 48,
+    allowedAbsences: 9,
+  },
+  {
+    code: "CS303",
+    name: "Databases",
+    absentClasses: 5,
+    totalClasses: 48,
+    allowedAbsences: 9,
+  },
 ];
 
 const ANNOUNCEMENTS_KEY = "globalAnnouncements";
@@ -37,14 +55,15 @@ export default function StudentHome() {
   const [announcements, setAnnouncements] = useState([]);
 
   useEffect(() => {
-    const studentCourseCodes = new Set(enrolledCourses.map(c => c.code));
+    const studentCourseCodes = new Set(enrolledCourses.map((c) => c.code));
     function loadAndFilter() {
       const all = loadGlobalAnnouncements();
       const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000; // last 2 days
-      const filtered = all.filter(a =>
-        ((a.target && a.target === "students") ||
-          (a.courseCode && studentCourseCodes.has(a.courseCode))
-        ) && new Date(a.createdAt).getTime() >= cutoff
+      const filtered = all.filter(
+        (a) =>
+          ((a.target && a.target === "students") ||
+            (a.courseCode && studentCourseCodes.has(a.courseCode))) &&
+          new Date(a.createdAt).getTime() >= cutoff
       );
       setAnnouncements(filtered);
     }
@@ -53,7 +72,9 @@ export default function StudentHome() {
     function onStorage(e) {
       if (e.key === ANNOUNCEMENTS_KEY) loadAndFilter();
     }
-    function onLocalUpdate() { loadAndFilter(); }
+    function onLocalUpdate() {
+      loadAndFilter();
+    }
 
     window.addEventListener("storage", onStorage);
     window.addEventListener("globalAnnouncementsUpdated", onLocalUpdate);
@@ -73,15 +94,35 @@ export default function StudentHome() {
             <section className="card-custom h-100 w-100">
               <h5 className="card-title accent text-center">Student Details</h5>
               <div className="card-content text-left mt-3">
-                <p><strong>First Name:</strong> {studentDetails.firstname}</p>
-                <p><strong>Last Name:</strong> {studentDetails.lastname}</p>
-                <p><strong>DOB:</strong> {studentDetails.DOB}</p>
-                <p><strong>Contact No:</strong> {studentDetails.contactno}</p>
-                <p><strong>CNIC NO:</strong> {studentDetails.CNIC}</p>
-                <p><strong>Enrollment Date:</strong> {studentDetails.enrolleddate}</p>
-                <p><strong>Department:</strong> {studentDetails.department}</p>
-                <p><strong>Current Semester:</strong> {studentDetails.currentsemester}</p>
-                <p><strong>Status:</strong> {studentDetails.status}</p>
+                <p>
+                  <strong>First Name:</strong> {studentDetails.firstname}
+                </p>
+                <p>
+                  <strong>Last Name:</strong> {studentDetails.lastname}
+                </p>
+                <p>
+                  <strong>DOB:</strong> {studentDetails.DOB}
+                </p>
+                <p>
+                  <strong>Contact No:</strong> {studentDetails.contactno}
+                </p>
+                <p>
+                  <strong>CNIC NO:</strong> {studentDetails.CNIC}
+                </p>
+                <p>
+                  <strong>Enrollment Date:</strong>{" "}
+                  {studentDetails.enrolleddate}
+                </p>
+                <p>
+                  <strong>Department:</strong> {studentDetails.department}
+                </p>
+                <p>
+                  <strong>Current Semester:</strong>{" "}
+                  {studentDetails.currentsemester}
+                </p>
+                <p>
+                  <strong>Status:</strong> {studentDetails.status}
+                </p>
               </div>
             </section>
           </div>
@@ -94,16 +135,24 @@ export default function StudentHome() {
                     {announcements.map((a, i) => (
                       <div key={i} className="announcement-item">
                         <div className="announcement-meta">
-                          {a.courseCode ? `${a.courseCode}${a.section ? ` - ${a.section}` : ''}` : ``}
-                          {a.author ? ` — ${a.author}` : ''}
+                          {a.courseCode
+                            ? `${a.courseCode}${
+                                a.section ? ` - ${a.section}` : ""
+                              }`
+                            : ``}
+                          {a.author ? ` — ${a.author}` : ""}
                         </div>
                         <div className="announcement-text">{a.text}</div>
-                        <div className="announcement-date">{new Date(a.createdAt).toLocaleString()}</div>
+                        <div className="announcement-date">
+                          {new Date(a.createdAt).toLocaleString()}
+                        </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="announcement-empty">No announcements for your courses.</div>
+                  <div className="announcement-empty">
+                    No announcements for your courses.
+                  </div>
                 )}
               </div>
             </section>
@@ -113,7 +162,9 @@ export default function StudentHome() {
         <div className="row w-100 justify-content-center mb-3">
           <div className="col-md-10 mb-3">
             <section className="card-custom">
-              <h3 className="card-title accent text-center">Enrolled Courses</h3>
+              <h3 className="card-title accent text-center">
+                Enrolled Courses
+              </h3>
               <div className="table-responsive">
                 <table className="table">
                   <thead>
@@ -125,18 +176,22 @@ export default function StudentHome() {
                   </thead>
                   <tbody>
                     {enrolledCourses.map((course) => {
-                      const attendanceLeft = course.allowedAbsences - course.absentClasses;
+                      const attendanceLeft =
+                        course.allowedAbsences - course.absentClasses;
                       return (
                         <tr key={course.code}>
                           <td>{course.code}</td>
                           <td>{course.name}</td>
                           <td>
                             <button className="gradient-btn">
-                              {attendanceLeft} <span style={{ fontSize: 12 }}>of {course.allowedAbsences} allowed</span>
+                              {attendanceLeft}{" "}
+                              <span style={{ fontSize: 12 }}>
+                                of {course.allowedAbsences} allowed
+                              </span>
                             </button>
                             <br />
                             {attendanceLeft <= 0 && (
-                              <span style={{color:"red", fontSize:12}}>
+                              <span style={{ color: "red", fontSize: 12 }}>
                                 Minimum required attendance reached!
                               </span>
                             )}

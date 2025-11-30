@@ -1,177 +1,108 @@
 /**
- * ../Admin/api.jsx
- *
- * Lightweight admin API wrapper for the Admin module components.
- * - Tries to call real HTTP endpoints under /api/admin/* if available.
- * - If the network call fails or endpoints are not present, falls back to a localStorage-backed demo mode.
- *
- * Usage (named exports):
- *  import {
- *    getAdmin,
- *    fetchFacultyLeaves,
- *    approveLeaveRequest,
- *    rejectLeaveRequest,
- *    fetchFacultyList,
- *    fetchCourses,
- *    fetchStudents,
- *    dropStudentFromCourse,
- *    assignStudentToCourse,
- *    fetchStudentFees,
- *    updateStudentFee
- *  } from '../Admin/api';
- *
- * Replace or wire the endpoints (URL paths) below to point to your real app.
+ * Admin-specific API calls - Updated to match your fetchJson pattern
  */
 
-const API_BASE = "/api/admin"; // change to your backend base path if needed
+import { fetchJson } from "../../api/client";
 
-/* Helper: try real fetch (no demo fallback) */
-async function tryFetch(path, options = {}) {
-  // attach auth token automatically if present
-  const token =
-    localStorage.getItem("auth_token") || localStorage.getItem("token");
-  options = { ...options, headers: { ...(options.headers || {}) } };
-  if (token && !options.headers.Authorization) {
-    options.headers.Authorization = `Bearer ${token}`;
-  }
-  // ensure that for JSON bodies the content-type header is present
-  if (options.body && !options.headers["Content-Type"]) {
-    options.headers["Content-Type"] = "application/json";
-  }
+const base = "/admin";
 
-  const res = await fetch(`${API_BASE}${path}`, options);
-  if (!res.ok) {
-    // bubble up a helpful error (caller can catch)
-    const text = await res.text().catch(() => "");
-    const message = text || `HTTP ${res.status}`;
-    const err = new Error(message);
-    err.status = res.status;
-    throw err;
-  }
-  // attempt to parse json; if none, return null
-  const ct = res.headers.get("content-type") || "";
-  return ct.includes("application/json") ? await res.json() : null;
+export function getAdminDashboard() {
+  return fetchJson(base, "/dashboard", { method: "GET" });
 }
 
-/* ---------- Admin API functions ---------- */
-
-/* Admin summary / dashboard data */
-export async function getAdmin() {
-  return tryFetch("/admin", {});
+export function fetchAllUsers() {
+  return fetchJson(base, "/users", { method: "GET" });
 }
 
-// compatibility alias
-export async function fetchAdminDashboard() {
-  return getAdmin();
+export function deleteUser(userId) {
+  return fetchJson(base, `/users/${userId}`, { method: "DELETE" });
 }
 
-/* Faculty leaves (pending/all) */
-export async function fetchFacultyLeaves() {
-  return tryFetch("/leaves", {});
+export function toggleUserStatus(userId) {
+  return fetchJson(base, `/users/${userId}/toggle-status`, { method: "PUT" });
 }
 
-export async function approveLeaveRequest(id) {
-  return tryFetch(`/leaves/${id}/approve`, { method: "POST" });
+export function fetchAllStudents() {
+  return fetchJson(base, "/students", { method: "GET" });
 }
 
-export async function rejectLeaveRequest(id) {
-  return tryFetch(`/leaves/${id}/reject`, { method: "POST" });
-}
-
-/* Faculty list */
-export async function fetchFacultyList() {
-  return tryFetch("/faculty", {});
-}
-
-/* Courses & Students */
-export async function fetchCourses() {
-  return tryFetch("/courses", {});
-}
-
-export async function fetchStudents() {
-  return tryFetch("/students", {});
-}
-
-/* Delete a student (used by Admin manage student UI) */
-export async function deleteUser(identifier) {
-  const roll = typeof identifier === "string" ? identifier : identifier?.roll;
-  if (!roll) throw new Error("deleteUser requires a student roll");
-  return tryFetch(`/students/${encodeURIComponent(roll)}`, {
-    method: "DELETE",
-  });
-}
-
-/* Drop a student from a course */
-export async function dropStudentFromCourse({ courseId, roll }) {
-  return tryFetch(`/courses/${courseId}/drop`, {
+export function createStudent(payload) {
+  return fetchJson(base, "/students", {
     method: "POST",
-    body: JSON.stringify({ roll }),
+    body: JSON.stringify(payload),
   });
 }
 
-/* Assign / enroll a student to a course */
-export async function assignStudentToCourse({ courseId, roll }) {
-  return tryFetch(`/courses/${courseId}/assign`, {
-    method: "POST",
-    body: JSON.stringify({ roll }),
-  });
-}
-
-/* Fees */
-export async function fetchStudentFees() {
-  return tryFetch("/fees", {});
-}
-
-export async function updateStudentFee({ roll, fee }) {
-  return tryFetch(`/fees/${encodeURIComponent(roll)}`, {
+export function updateStudent(studentId, payload) {
+  return fetchJson(base, `/students/${studentId}`, {
     method: "PUT",
-    body: JSON.stringify({ fee }),
+    body: JSON.stringify(payload),
   });
 }
 
-/* Login function — store token on success to let tryFetch attach it */
-export async function login(credentials) {
-  const { username, password } = credentials || {};
-  if (!username || !password) {
-    throw new Error("login requires { username, password }");
-  }
+export function fetchAllFaculty() {
+  return fetchJson(base, "/faculty", { method: "GET" });
+}
 
-  const res = await fetch("/api/auth/login", {
+export function createFaculty(payload) {
+  return fetchJson(base, "/faculty", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify(payload),
   });
-
-  if (!res.ok) throw new Error("Login failed: " + res.status);
-  const data = await res.json();
-
-  if (data?.data?.token) {
-    localStorage.setItem("auth_token", data.data.token);
-  }
-
-  return data;
 }
 
-/* Fetch all users (admin list) — added to fix managestudent.jsx import */
-export async function fetchAllUsers() {
-  // endpoint: GET /api/admin/users
-  return tryFetch("/users", {});
+export function fetchAllCourseSections() {
+  return fetchJson(base, "/course_sections", { method: "GET" });
 }
 
-/**
- * Backend API endpoints summary:
- *
- * - `GET /admin`: Admin dashboard summary
- * - `GET /leaves`: List all leaves (faculty)
- * - `POST /leaves/{id}/approve`: Approve a leave request
- * - `POST /leaves/{id}/reject`: Reject a leave request
- * - `GET /faculty`: List all faculty members
- * - `GET /courses`: List all courses
- * - `GET /students`: List all students
- * - `DELETE /students/{roll}`: Delete a student
- * - `POST /courses/{courseId}/drop`: Drop a student from a course
- * - `POST /courses/{courseId}/assign`: Assign a student to a course
- * - `GET /fees`: Get all student fees
- * - `PUT /fees/{roll}`: Update a student's fee
- * - `POST /login`: Authenticate and login
- */
+export function createCourse(payload) {
+  return fetchJson(base, "/courses", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function createCourseSection(payload) {
+  return fetchJson(base, "/course_sections", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function fetchPendingLeaves() {
+  return fetchJson(base, "/leaves/pending", { method: "GET" });
+}
+
+export function approveLeave(leaveId) {
+  return fetchJson(base, `/leave/${leaveId}/approve`, { method: "POST" });
+}
+
+export function rejectLeave(leaveId) {
+  return fetchJson(base, `/leave/${leaveId}/reject`, { method: "POST" });
+}
+
+export function fetchAllFees() {
+  return fetchJson(base, "/fees", { method: "GET" });
+}
+
+export function markFeePaid(feeId) {
+  return fetchJson(base, `/fees/${feeId}/mark-paid`, { method: "PUT" });
+}
+
+export function addFeeRecord(payload) {
+  return fetchJson(base, "/fees", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function markFacultyAttendance(payload) {
+  return fetchJson(base, "/faculty-attendance/mark", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getFacultyAttendance(date) {
+  return fetchJson(base, `/faculty-attendance/${date}`, { method: "GET" });
+}

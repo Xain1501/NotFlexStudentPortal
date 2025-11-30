@@ -2312,3 +2312,6 @@ def admin_drop_student_course(current_user):
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+    
+
+   
