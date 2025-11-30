@@ -189,7 +189,7 @@ class FacultyLeaves {
   + rejectLeave(leaveId): Boolean
 }
 
-class FacultyAttendance {
+class   {
   - attendance_id: Integer {pk}
   - faculty_id: Integer {fk}
   - attendance_date: Date
@@ -198,8 +198,8 @@ class FacultyAttendance {
   - marked_by: Integer {fk}
   - marked_at: Timestamp
   --
-  + markFacultyAttendance(facultyId, date, session, status, markedBy): Boolean
-  + getFacultyAttendanceByDate(date): List<FacultyAttendance>
+  + mark (facultyId, date, session, status, markedBy): Boolean
+  + get ByDate(date): List< >
 }
 
 class RegistrationPeriod {
@@ -290,7 +290,7 @@ Student ||--o{ Transcript : "1:M"
 ' Administration Relationships
 Student ||--o{ FeeDetails : "1:M"
 Faculty ||--o{ FacultyLeaves : "1:M"
-Faculty ||--o{ FacultyAttendance : "1:M"
+Faculty ||--o{   : "1:M"
 Faculty ||--o{ Announcements : "1:M"
 CourseSection ||--o{ Announcements : "1:M"
 

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../Student/transcript.css";
+import { getTranscript } from "./api";
 
 export default function MarksPage() {
   const [semester] = useState("Fall");
@@ -12,6 +13,9 @@ export default function MarksPage() {
     { no: 2, name: "CN", credits: 3, gpa: 4.0, grade: "A" },
     { no: 3, name: "SDA", credits: 3, gpa: 4.0, grade: "A" },
   ]);
+  const [transcript, setTranscript] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
 
   // Helper to dynamically import jspdf with fallback
   const loadJsPDF = async () => {
@@ -59,19 +63,33 @@ export default function MarksPage() {
       // create pdf and add content
       const pdf = new jsPDFCtor("p", "mm", "a4");
       pdf.setFontSize(18);
-      pdf.text("Transcript", pdf.internal.pageSize.getWidth() / 2, 20, { align: "center" });
+      pdf.text("Transcript", pdf.internal.pageSize.getWidth() / 2, 20, {
+        align: "center",
+      });
 
       pdf.setFontSize(11);
       const leftX = 14;
       let y = 30;
       pdf.text(`Semester: ${semester} (${year})`, leftX, y);
-      pdf.text(`Semester GPA: ${semesterGPA}`, pdf.internal.pageSize.getWidth() / 2, y, { align: "center" });
-      pdf.text(`CGPA: ${cgpa}`, pdf.internal.pageSize.getWidth() - 14, y, { align: "right" });
+      pdf.text(
+        `Semester GPA: ${semesterGPA}`,
+        pdf.internal.pageSize.getWidth() / 2,
+        y,
+        { align: "center" }
+      );
+      pdf.text(`CGPA: ${cgpa}`, pdf.internal.pageSize.getWidth() - 14, y, {
+        align: "right",
+      });
 
       y += 10;
 
       const head = [["Course No", "Course Name", "Credit Hours", "GPA"]];
-      const body = courses.map((c) => [String(c.no), c.name, String(c.credits), String(c.gpa)]);
+      const body = courses.map((c) => [
+        String(c.no),
+        c.name,
+        String(c.credits),
+        String(c.gpa),
+      ]);
 
       if (typeof autoTable === "function") {
         // call as function autoTable(pdf, opts)
@@ -81,7 +99,11 @@ export default function MarksPage() {
           startY: y,
           margin: { left: 14, right: 14 },
           styles: { fontSize: 10 },
-          headStyles: { fillColor: [240, 240, 240], textColor: 20, fontStyle: "bold" },
+          headStyles: {
+            fillColor: [240, 240, 240],
+            textColor: 20,
+            fontStyle: "bold",
+          },
         });
       } else if (typeof pdf.autoTable === "function") {
         pdf.autoTable({
@@ -121,10 +143,36 @@ export default function MarksPage() {
     }
   };
 
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await getTranscript();
+        if (mounted) setTranscript(res);
+      } catch (e) {
+        if (mounted) setErr(e.message || String(e));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (loading) return <div>Loading transcript...</div>;
+  if (err) return <div>Error: {err}</div>;
+
   return (
     <div className="transcript-page my-4">
       <div className="transcript-header">
-        <button type="button" className="btn btn-primary download-btn" onClick={handleDownloadPDF}>
+        <button
+          type="button"
+          className="btn btn-primary download-btn"
+          onClick={handleDownloadPDF}
+        >
           Download
         </button>
         <h1 className="transcript-title text-center">Transcript</h1>
@@ -133,7 +181,9 @@ export default function MarksPage() {
       <div className="transcript-meta d-flex flex-row justify-content-between align-items-center gap-3 mb-3 flex-wrap">
         <div className="meta-item d-flex text-start align-items-center">
           <div className="meta-label">Semester:</div>
-          <div className="meta-value">{semester} ({year})</div>
+          <div className="meta-value">
+            {semester} ({year})
+          </div>
         </div>
 
         <div className="meta-item d-flex text-center align-items-center">
@@ -145,33 +195,32 @@ export default function MarksPage() {
           <div className="meta-label">CGPA:</div>
           <div className="meta-value">{cgpa}</div>
         </div>
-
       </div>
 
-    <div className="table-responsive">
-      <table className="table">
-        <thead>
-          <tr>
-            <th scope="col">Course No</th>
-            <th scope="col">Course Name</th>
-            <th scope="col">Credit Hours</th>
-            <th scope="col">GPA</th>
-            <th scope="col">Grade</th>
-          </tr>
-        </thead>
-        <tbody>
-          {courses.map((c) => (
-            <tr key={c.no}>
-              <th scope="row">{c.no}</th>
-              <td>{c.name}</td>
-              <td>{c.credits}</td>
-              <td>{c.gpa}</td>
-              <td>{c.grade}</td>
+      <div className="table-responsive">
+        <table className="table">
+          <thead>
+            <tr>
+              <th scope="col">Course No</th>
+              <th scope="col">Course Name</th>
+              <th scope="col">Credit Hours</th>
+              <th scope="col">GPA</th>
+              <th scope="col">Grade</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {courses.map((c) => (
+              <tr key={c.no}>
+                <th scope="row">{c.no}</th>
+                <td>{c.name}</td>
+                <td>{c.credits}</td>
+                <td>{c.gpa}</td>
+                <td>{c.grade}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

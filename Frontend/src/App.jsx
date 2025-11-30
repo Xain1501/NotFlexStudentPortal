@@ -15,7 +15,6 @@ import CourseRegistration from "./Pages/Student/courseregistration.jsx";
 import TeacherHome from "./Pages/Faculty/home.jsx";
 import MarkAttendance from "./Pages/Faculty/attendance.jsx";
 import Leave from "./Pages/Faculty/leaveapplication.jsx";
-import FacultyAttendanceitself from "./Pages/Faculty/facultyattendance.jsx";
 import UpdateMarks from "./Pages/Faculty/marks.jsx";
 // NOTE: removed the stray import that didn't assign a component:
 // import "./Pages/Faculty/timetable.jsx";
@@ -23,7 +22,6 @@ import UpdateMarks from "./Pages/Faculty/marks.jsx";
 
 // Admin pages
 import AdminHome from "./Pages/Admin/adminhome.jsx";
-import FacultyAttendance from "./Pages/Admin/facultyattendance.jsx";
 import ApproveLeave from "./Pages/Admin/leave.jsx";
 // Fixed file name: coursemanagement (was 'coursemangement' typo)
 import CourseManagement from "./Pages/Admin/coursemangement.jsx";
@@ -31,6 +29,7 @@ import FeeStructure from "./Pages/Admin/feemanagement.jsx";
 import ManageStudent from "./Pages/Admin/managestudent.jsx";
 import ManageFaculty from "./Pages/Admin/managefaculty.jsx";
 import ManageDepartments from "./Pages/Admin/managedepartment.jsx";
+import AdminLogin from "./Pages/Admin/Login.jsx"; // Importing Admin Login
 
 // If you have admin pages for student marks or admin timetable, import them here.
 // import StudentMarksAdmin from "./Pages/Admin/studentmarks.jsx";
@@ -52,23 +51,22 @@ export default function App() {
         <Route path="/student/attendance" element={<StudentAttendance />} />
         <Route path="/student/timetable" element={<Timetable />} />
         <Route path="/student/feedetail" element={<FeeDetail />} />
-        <Route path="/student/courseregistration" element={<CourseRegistration />} />
+        <Route
+          path="/student/courseregistration"
+          element={<CourseRegistration />}
+        />
       </Route>
-
       {/* Faculty area under FacultyLayout */}
       <Route path="faculty" element={<FacultyLayout />}>
         <Route index element={<TeacherHome />} />
         <Route path="attendance" element={<MarkAttendance />} />
         <Route path="leave" element={<Leave />} />
         <Route path="marks" element={<UpdateMarks />} />
-        <Route path="facultyattendance" element={<FacultyAttendanceitself />} />
         <Route path="timetable" element={<Timetable />} />
       </Route>
-
       {/* Admin area under AdminLayout */}
       <Route path="admin" element={<AdminLayout />}>
         <Route index element={<AdminHome />} />
-        <Route path="facultyattendance" element={<FacultyAttendance />} />
         <Route path="approveleave" element={<ApproveLeave />} />
         <Route path="coursemanagement" element={<CourseManagement />} />
         <Route path="feestructure" element={<FeeStructure />} />
@@ -80,12 +78,15 @@ export default function App() {
         {/* <Route path="studentmarks" element={<StudentMarksAdmin />} /> */}
         {/* <Route path="timetable" element={<TimetableAdmin />} /> */}
       </Route>
-
       {/* Auth */}
       <Route path="/login" element={<Login />} />
-
+      <Route path="/admin/login" element={<AdminLogin />} />{" "}
+      {/* Admin login route */}
       {/* 404 fallback */}
-      <Route path="*" element={<div className="text-center py-5">Page not found</div>} />
+      <Route
+        path="*"
+        element={<div className="text-center py-5">Page not found</div>}
+      />
     </Routes>
   );
 }

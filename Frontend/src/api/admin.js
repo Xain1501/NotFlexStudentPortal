@@ -5,54 +5,80 @@
  * All endpoints require JWT authentication
  */
 
-const BASE_URL = "http://localhost:5000";
+import { fetchJson, apiRoot } from "./client";
 
-/* Helper: get token from localStorage */
-function getToken() {
-  return (
-    localStorage.getItem("token") ||
-    localStorage.getItem("admin_token") ||
-    sessionStorage.getItem("token") ||
-    ""
-  );
-}
+const BASE = "/admin";
 
-/* Helper: make authenticated API requests */
+// Helper to use apiRequest pattern that exists in the code
 async function apiRequest(endpoint, options = {}) {
-  const token = getToken();
-
-  const config = {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
   };
+  const token = localStorage.getItem("token");
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
 
-  try {
-    const response = await fetch(`${BASE_URL}${endpoint}`, config);
-    const data = await response.json();
+  const res = await fetch(`${apiRoot()}${endpoint}`, {
+    ...options,
+    headers,
+  });
 
-    if (response.ok) {
-      return { success: true, data, message: data.message };
-    } else {
+  const text = await res.text();
+  if (!res.ok) {
+    try {
+      const err = JSON.parse(text);
       return {
         success: false,
-        message: data.message || data.error || "Request failed",
-        data,
+        message: err.message || JSON.stringify(err),
+        data: null,
       };
+    } catch {
+      return { success: false, message: text || res.statusText, data: null };
     }
-  } catch (error) {
-    return { success: false, message: error.message };
   }
+
+  try {
+    const data = JSON.parse(text);
+    return { success: true, data, message: null };
+  } catch {
+    return { success: true, data: text, message: null };
+  }
+}
+
+export function getAdminDashboard() {
+  return fetchJson(BASE, "/dashboard", { method: "GET" });
+}
+
+export function getAllUsers() {
+  return fetchJson(BASE, "/users", { method: "GET" });
+}
+
+export function deleteUser(userId) {
+  return fetchJson(BASE, `/users/${userId}`, { method: "DELETE" });
+}
+
+export function toggleUserStatus(userId) {
+  return fetchJson(BASE, `/users/${userId}/toggle-status`, { method: "PUT" });
+}
+
+export function getAnnouncements() {
+  return fetchJson(BASE, "/announcements", { method: "GET" });
+}
+
+export function postAnnouncement(payload) {
+  return fetchJson(BASE, "/announcements", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 /* ========== AUTH FUNCTIONS ========== */
 
 export async function adminLogin(username, password) {
   try {
-    const response = await fetch(`${BASE_URL}/api/login`, {
+    const response = await fetch(`${apiRoot()}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -287,14 +313,14 @@ export async function rejectLeaveRequest(id) {
 
 /* ========== FACULTY ATTENDANCE ========== */
 
-export async function saveFacultyAttendance(payload) {
+export async function save(payload) {
   return apiRequest("/api/admin/faculty-attendance/bulk", {
     method: "POST",
     body: JSON.stringify(payload),
   });
 }
 
-export async function fetchFacultyAttendance(date) {
+export async function fetch(date) {
   const result = await apiRequest(`/api/admin/faculty-attendance/${date}`);
   if (result.success && result.data?.data?.attendance) {
     return result.data.data.attendance;

@@ -1,5 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Outlet, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  Outlet,
+  NavLink,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import "./layout.css";
 
 export default function FacultyLayout() {
@@ -58,22 +64,47 @@ export default function FacultyLayout() {
 
   const navLinks = (
     <>
-      <NavLink to="/faculty" end className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/faculty"
+        end
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Home
       </NavLink>
-      <NavLink to="/faculty/attendance" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/faculty/attendance"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Mark Attendance
       </NavLink>
-      <NavLink to="/faculty/leave" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/faculty/leave"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Apply Leave
       </NavLink>
-      <NavLink to="/faculty/marks" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/faculty/marks"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Student Marks
       </NavLink>
-      <NavLink to="/faculty/facultyattendance" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/faculty/ "
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Faculty Attendance
       </NavLink>
-      <NavLink to="/faculty/timetable" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/faculty/timetable"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Timetable
       </NavLink>
     </>
@@ -84,7 +115,9 @@ export default function FacultyLayout() {
       <header className="admin-topbar d-flex align-items-center justify-content-between px-3">
         <div className="d-flex align-items-center position-relative">
           <button
-            className={`btn btn-sm btn-light d-md-none me-2 mobile-hamburger-btn ${mobileOpen ? "active" : ""}`}
+            className={`btn btn-sm btn-light d-md-none me-2 mobile-hamburger-btn ${
+              mobileOpen ? "active" : ""
+            }`}
             type="button"
             aria-label="Toggle navigation"
             aria-controls="mobile-nav"
@@ -102,7 +135,9 @@ export default function FacultyLayout() {
           <nav
             id="mobile-nav"
             ref={mobileNavRef}
-            className={`student-topnav-mobile d-md-none ${mobileOpen ? "open" : ""}`}
+            className={`student-topnav-mobile d-md-none ${
+              mobileOpen ? "open" : ""
+            }`}
             aria-hidden={!mobileOpen}
           >
             {navLinks}
@@ -110,9 +145,7 @@ export default function FacultyLayout() {
         </div>
 
         <div className="d-flex align-items-center">
-          <nav className="d-none d-md-flex admin-topnav">
-            {navLinks}
-          </nav>
+          <nav className="d-none d-md-flex admin-topnav">{navLinks}</nav>
 
           <div className="ms-3 dropdown" ref={menuRef}>
             <button
@@ -126,7 +159,9 @@ export default function FacultyLayout() {
             </button>
 
             <ul
-              className={`dropdown-menu dropdown-menu-end ${menuOpen ? "show" : ""}`}
+              className={`dropdown-menu dropdown-menu-end ${
+                menuOpen ? "show" : ""
+              }`}
               style={{ minWidth: 140 }}
             >
               <li>

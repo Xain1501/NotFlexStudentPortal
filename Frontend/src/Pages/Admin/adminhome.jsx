@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { getAdmin } from "../Admin/api"; // keep your existing API or mock fallback
+import { fetchAdminDashboard } from "./api.jsx";
 import { useNavigate } from "react-router-dom";
 import "./adminhome.css";
 
@@ -7,7 +7,12 @@ const ANNOUNCEMENTS_KEY = "globalAnnouncements";
 
 function ensureIdForAnn(a) {
   // create a stable-appearing unique id
-  return a.id || `${new Date(a.createdAt || Date.now()).getTime()}-${Math.floor(Math.random() * 100000)}`;
+  return (
+    a.id ||
+    `${new Date(a.createdAt || Date.now()).getTime()}-${Math.floor(
+      Math.random() * 100000
+    )}`
+  );
 }
 
 // load announcements from localStorage and ensure every item has an id
@@ -16,7 +21,7 @@ function loadGlobalAnnouncements() {
     const raw = localStorage.getItem(ANNOUNCEMENTS_KEY);
     const arr = raw ? JSON.parse(raw) : [];
     let mutated = false;
-    const normalized = (arr || []).map(item => {
+    const normalized = (arr || []).map((item) => {
       if (!item.id) {
         mutated = true;
         return { ...item, id: ensureIdForAnn(item) };
@@ -37,31 +42,54 @@ function loadGlobalAnnouncements() {
 export default function AdminHome() {
   const navigate = useNavigate();
   const [admin, setAdmin] = useState(null);
-  const [viewDays, setViewDays] = useState(7); // admin timeframe selector
+  const [viewDays] = useState(7); // admin timeframe selector
   const [globalAnns, setGlobalAnns] = useState([]);
   const [newAnnText, setNewAnnText] = useState("");
 
-  // load admin profile (demo fallback)
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // load admin profile + dashboard from backend (single request)
   useEffect(() => {
-    (async () => {
+    let mounted = true;
+    async function load() {
+      setLoading(true);
       try {
-        if (typeof getAdmin === "function") {
-          const resp = await getAdmin();
-          if (resp && resp.announcements) resp.announcements = resp.announcements || [];
-          setAdmin(resp);
-          return;
+        const res = await fetchAdminDashboard();
+        if (!mounted) return;
+        setData(res);
+        // if backend returns admin/profile as part of dashboard, use it
+        if (res && res.admin) setAdmin(res.admin);
+        else if (res && res.profile) setAdmin(res.profile);
+        else {
+          // keep fallback demo admin if none provided
+          setAdmin({
+            name: "Admin User",
+            email: "admin@uni.edu",
+            department: "Academic Affairs",
+            contact: "03001234567",
+            announcements: [],
+          });
         }
       } catch (err) {
-        console.warn("getAdmin failed, using demo data", err);
+        if (mounted) setError(err.message || String(err));
+        // ensure fallback admin on error
+        if (mounted) {
+          setAdmin({
+            name: "Admin User",
+            email: "admin@uni.edu",
+            department: "Academic Affairs",
+            contact: "03001234567",
+            announcements: [],
+          });
+        }
+      } finally {
+        if (mounted) setLoading(false);
       }
-      setAdmin({
-        name: "Admin User",
-        email: "admin@uni.edu",
-        department: "Academic Affairs",
-        contact: "03001234567",
-        announcements: [],
-      });
-    })();
+    }
+    load();
+    return () => (mounted = false);
   }, []);
 
   // helper to load announcements from storage and apply timeframe filter
@@ -72,7 +100,7 @@ export default function AdminHome() {
       return;
     }
     const cutoff = Date.now() - viewDays * 24 * 60 * 60 * 1000;
-    setGlobalAnns(all.filter(a => new Date(a.createdAt).getTime() >= cutoff));
+    setGlobalAnns(all.filter((a) => new Date(a.createdAt).getTime() >= cutoff));
   }, [viewDays]);
 
   useEffect(() => {
@@ -81,14 +109,19 @@ export default function AdminHome() {
     window.addEventListener("globalAnnouncementsUpdated", refreshAnnouncements);
     return () => {
       window.removeEventListener("storage", refreshAnnouncements);
-      window.removeEventListener("globalAnnouncementsUpdated", refreshAnnouncements);
+      window.removeEventListener(
+        "globalAnnouncementsUpdated",
+        refreshAnnouncements
+      );
     };
   }, [refreshAnnouncements]);
 
   if (!admin) return <div className="text-center py-5">Loading...</div>;
+  if (loading) return <div>Loading dashboard...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   // only show announcements authored by this admin
-  const myGlobalAnns = globalAnns.filter(a => a.author === admin.name);
+  const myGlobalAnns = globalAnns.filter((a) => a.author === admin.name);
 
   // Post an announcement with a given target ('students' or 'faculty')
   function postAnnouncement(target) {
@@ -103,7 +136,7 @@ export default function AdminHome() {
       target, // 'students' or 'faculty'
       author: admin.name,
       text,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
     try {
@@ -129,11 +162,14 @@ export default function AdminHome() {
       alert("Unable to delete: announcement id missing.");
       return;
     }
-    if (!window.confirm("Delete this announcement? This action cannot be undone.")) return;
+    if (
+      !window.confirm("Delete this announcement? This action cannot be undone.")
+    )
+      return;
 
     try {
       const all = loadGlobalAnnouncements();
-      const remaining = all.filter(a => a.id !== id);
+      const remaining = all.filter((a) => a.id !== id);
       localStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(remaining));
       window.dispatchEvent(new Event("globalAnnouncementsUpdated"));
       // Update local state immediately
@@ -154,12 +190,22 @@ export default function AdminHome() {
         <div className="col-lg-5 col-md-6 mb-3">
           <div className="card info-card">
             <div className="card-body">
-              <h5 className="card-title accent text-center">Personal Details</h5>
+              <h5 className="card-title accent text-center">
+                Personal Details
+              </h5>
               <div className="card-content text-left mt-3">
-                <p><strong>Name:</strong> {admin.name}</p>
-                <p><strong>Department:</strong> {admin.department}</p>
-                <p><strong>Contact:</strong> {admin.contact}</p>
-                <p><strong>Email:</strong> {admin.email}</p>
+                <p>
+                  <strong>Name:</strong> {admin.name}
+                </p>
+                <p>
+                  <strong>Department:</strong> {admin.department}
+                </p>
+                <p>
+                  <strong>Contact:</strong> {admin.contact}
+                </p>
+                <p>
+                  <strong>Email:</strong> {admin.email}
+                </p>
               </div>
             </div>
           </div>
@@ -173,19 +219,33 @@ export default function AdminHome() {
               <div className="card-content text-left mt-3 mb-3">
                 {myGlobalAnns && myGlobalAnns.length > 0 ? (
                   <div>
-                    {myGlobalAnns.map((a, i) => (
-                      <div key={a.id} className="admin-ann-item" style={{ position: "relative", paddingRight: 120 }}>
+                    {myGlobalAnns.map((ann) => (
+                      <div
+                        key={ann.id}
+                        className="admin-ann-item"
+                        style={{ position: "relative", paddingRight: 120 }}
+                      >
                         <div className="admin-ann-meta">
-                          <strong>[{a.target}]</strong> — {a.author}
+                          <strong>[{ann.target}]</strong> — {ann.author}
                         </div>
-                        <div className="admin-ann-text" style={{ marginTop: 6 }}>{a.text}</div>
-                        <div className="admin-ann-time" style={{ marginTop: 6 }}>{new Date(a.createdAt).toLocaleString()}</div>
+                        <div
+                          className="admin-ann-text"
+                          style={{ marginTop: 6 }}
+                        >
+                          {ann.text}
+                        </div>
+                        <div
+                          className="admin-ann-time"
+                          style={{ marginTop: 6 }}
+                        >
+                          {new Date(ann.createdAt).toLocaleString()}
+                        </div>
 
                         {/* Delete button (visible to admin who authored the post) */}
                         <div style={{ position: "absolute", right: 8, top: 8 }}>
                           <button
                             className="btn btn-sm btn-outline-danger"
-                            onClick={() => deleteAnnouncement(a.id)}
+                            onClick={() => deleteAnnouncement(ann.id)}
                             title="Delete announcement"
                           >
                             Delete
@@ -203,7 +263,9 @@ export default function AdminHome() {
 
               {/* Composer: always visible textarea + two buttons underneath */}
               <div>
-                <label htmlFor="newAnn" className="sr-only">New announcement</label>
+                <label htmlFor="newAnn" className="sr-only">
+                  New announcement
+                </label>
                 <textarea
                   id="newAnn"
                   rows={3}
@@ -227,7 +289,6 @@ export default function AdminHome() {
                   </button>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -238,11 +299,19 @@ export default function AdminHome() {
         <div className="col-lg-10">
           <div className="card info-card">
             <div className="card-body d-flex flex-column">
-              <h5 className="card-title accent text-center">Student Management</h5>
+              <h5 className="card-title accent text-center">
+                Student Management
+              </h5>
               <div className="card-content text-left mt-3">
-                <p>Manage student records — create, view, edit and delete students.</p>
+                <p>
+                  Manage student records — create, view, edit and delete
+                  students.
+                </p>
                 <div className="d-flex justify-content-center">
-                  <button className="btn btn-primary" onClick={() => navigate("/admin/managestudent")}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate("/admin/managestudent")}
+                  >
                     Manage Students
                   </button>
                 </div>
@@ -257,11 +326,19 @@ export default function AdminHome() {
         <div className="col-lg-10">
           <div className="card info-card">
             <div className="card-body d-flex flex-column">
-              <h5 className="card-title accent text-center">Faculty Management</h5>
+              <h5 className="card-title accent text-center">
+                Faculty Management
+              </h5>
               <div className="card-content text-left mt-3">
-                <p>Manage faculty records — create, view, edit and delete faculty members.</p>
+                <p>
+                  Manage faculty records — create, view, edit and delete faculty
+                  members.
+                </p>
                 <div className="d-flex justify-content-center">
-                  <button className="btn btn-primary" onClick={() => navigate("/admin/managefaculty")}>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => navigate("/admin/managefaculty")}
+                  >
                     Manage Faculty
                   </button>
                 </div>
@@ -271,6 +348,11 @@ export default function AdminHome() {
         </div>
       </div>
 
+      {/* Debug: Raw dashboard data (remove in production) */}
+      <div style={{ display: "none" }}>
+        <h2>Admin Dashboard</h2>
+        <pre>{JSON.stringify(data, null, 2)}</pre>
+      </div>
     </main>
   );
 }

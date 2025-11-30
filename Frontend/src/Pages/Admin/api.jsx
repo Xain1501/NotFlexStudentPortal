@@ -12,8 +12,6 @@
  *    approveLeaveRequest,
  *    rejectLeaveRequest,
  *    fetchFacultyList,
- *    saveFacultyAttendance,
- *    fetchFacultyAttendance,
  *    fetchCourses,
  *    fetchStudents,
  *    dropStudentFromCourse,
@@ -25,219 +23,145 @@
  * Replace or wire the endpoints (URL paths) below to point to your real backend.
  */
 
-const API_BASE = '/api/admin'; // change to your backend base path if needed
-const DEMO_KEY = 'uni_admin_demo_v1';
+const API_BASE = "/api/admin"; // change to your backend base path if needed
 
-/* Small helper to simulate latency for demo fallback */
-function delay(ms = 300) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+/* Helper: try real fetch (no demo fallback) */
+async function tryFetch(path, options = {}) {
+  // attach auth token automatically if present
+  const token =
+    localStorage.getItem("auth_token") || localStorage.getItem("token");
+  options = { ...options, headers: { ...(options.headers || {}) } };
+  if (token && !options.headers.Authorization) {
+    options.headers.Authorization = `Bearer ${token}`;
+  }
+  // ensure that for JSON bodies the content-type header is present
+  if (options.body && !options.headers["Content-Type"]) {
+    options.headers["Content-Type"] = "application/json";
+  }
 
-/* Helper: try real fetch then fallback to demo */
-async function tryFetch(path, options = {}, fallbackFn) {
-  try {
-    // attempt real backend call
-    const res = await fetch(`${API_BASE}${path}`, options);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data;
-  } catch (err) {
-    // fallback to demo function if provided
-    if (typeof fallbackFn === 'function') {
-      await delay(250); // make it feel realistic
-      return fallbackFn();
-    }
+  const res = await fetch(`${API_BASE}${path}`, options);
+  if (!res.ok) {
+    // bubble up a helpful error (caller can catch)
+    const text = await res.text().catch(() => "");
+    const message = text || `HTTP ${res.status}`;
+    const err = new Error(message);
+    err.status = res.status;
     throw err;
   }
-}
-
-/* Demo storage helpers */
-function seededDemoData() {
-  const stored = localStorage.getItem(DEMO_KEY);
-  if (stored) return JSON.parse(stored);
-
-  const demo = {
-    admin: {
-      name: 'Admin User',
-      email: 'admin@uni.edu',
-      department: 'Academic Affairs',
-      contact: '03001234567',
-      announcements: [
-        'Exam timetable published next week.',
-        'Faculty meeting on Friday 3pm in Conference Room B.'
-      ]
-    },
-    faculty: [
-      { id: 'F1', name: 'Dr. Aisha Khan' },
-      { id: 'F2', name: 'Mr. Ali Raza' }
-    ],
-    leaves: [
-      { id: 'L1', facultyId: 'F1', faculty: 'Dr. Aisha Khan', from: '2025-11-20', to: '2025-11-22', type: 'Casual', reason: 'Conference', status: 'Pending', appliedOn: '2025-11-02' },
-      { id: 'L2', facultyId: 'F2', faculty: 'Mr. Ali Raza', from: '2025-12-01', to: '2025-12-02', type: 'Sick', reason: 'Medical', status: 'Pending', appliedOn: '2025-11-05' }
-    ],
-    facultyAttendance: [], // { id, date, session, present: ['F1', ...] }
-    courses: [
-      { id: 'CS301-A', code: 'CS301', name: 'Data Structures', section: 'A', students: [{ roll: 'S1', name: 'Ali' }, { roll: 'S2', name: 'Sara' }] },
-      { id: 'CS302-B', code: 'CS302', name: 'Operating Systems', section: 'B', students: [{ roll: 'S3', name: 'Hassan' }] }
-    ],
-    students: [
-      { roll: 'S1', name: 'Ali' }, { roll: 'S2', name: 'Sara' }, { roll: 'S3', name: 'Hassan' }, { roll: 'S4', name: 'Zara' }
-    ],
-    fees: [
-      { roll: 'S1', name: 'Ali', fee: 20000 },
-      { roll: 'S2', name: 'Sara', fee: 18000 },
-      { roll: 'S3', name: 'Hassan', fee: 20000 }
-    ]
-  };
-
-  localStorage.setItem(DEMO_KEY, JSON.stringify(demo));
-  return demo;
-}
-
-function readDemo() {
-  return seededDemoData();
-}
-function writeDemo(data) {
-  localStorage.setItem(DEMO_KEY, JSON.stringify(data));
+  // attempt to parse json; if none, return null
+  const ct = res.headers.get("content-type") || "";
+  return ct.includes("application/json") ? await res.json() : null;
 }
 
 /* ---------- Admin API functions ---------- */
 
 /* Admin summary / dashboard data */
 export async function getAdmin() {
-  return tryFetch('/admin', {}, () => {
-    const d = readDemo();
-    return {
-      ...d.admin,
-      courses: d.courses
-    };
-  });
+  return tryFetch("/admin", {});
+}
+
+// compatibility alias
+export async function fetchAdminDashboard() {
+  return getAdmin();
 }
 
 /* Faculty leaves (pending/all) */
 export async function fetchFacultyLeaves() {
-  return tryFetch('/leaves', {}, () => {
-    const d = readDemo();
-    return d.leaves.slice().sort((a,b) => (b.appliedOn || '').localeCompare(a.appliedOn || ''));
-  });
+  return tryFetch("/leaves", {});
 }
 
 export async function approveLeaveRequest(id) {
-  return tryFetch(`/leaves/${id}/approve`, { method: 'POST' }, () => {
-    const d = readDemo();
-    const idx = d.leaves.findIndex(l => l.id === id);
-    if (idx >= 0) d.leaves[idx].status = 'Approved';
-    writeDemo(d);
-    return { ok: true };
-  });
+  return tryFetch(`/leaves/${id}/approve`, { method: "POST" });
 }
 
 export async function rejectLeaveRequest(id) {
-  return tryFetch(`/leaves/${id}/reject`, { method: 'POST' }, () => {
-    const d = readDemo();
-    const idx = d.leaves.findIndex(l => l.id === id);
-    if (idx >= 0) d.leaves[idx].status = 'Rejected';
-    writeDemo(d);
-    return { ok: true };
-  });
+  return tryFetch(`/leaves/${id}/reject`, { method: "POST" });
 }
 
 /* Faculty list */
 export async function fetchFacultyList() {
-  return tryFetch('/faculty', {}, () => {
-    const d = readDemo();
-    return d.faculty.slice();
-  });
-}
-
-/* Faculty attendance */
-export async function saveFacultyAttendance(payload) {
-  // payload: { date, session, present: ['F1','F2'] }
-  return tryFetch('/faculty-attendance', { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } }, () => {
-    const d = readDemo();
-    const rec = { id: `fa-${Date.now()}`, ...payload };
-    d.facultyAttendance.unshift(rec);
-    writeDemo(d);
-    return rec;
-  });
-}
-
-export async function fetchFacultyAttendance() {
-  return tryFetch('/faculty-attendance', {}, () => {
-    const d = readDemo();
-    return d.facultyAttendance.slice();
-  });
+  return tryFetch("/faculty", {});
 }
 
 /* Courses & Students */
 export async function fetchCourses() {
-  return tryFetch('/courses', {}, () => {
-    const d = readDemo();
-    return d.courses.slice();
-  });
+  return tryFetch("/courses", {});
 }
 
 export async function fetchStudents() {
-  return tryFetch('/students', {}, () => {
-    const d = readDemo();
-    return d.students.slice();
+  return tryFetch("/students", {});
+}
+
+/* Delete a student (used by Admin manage student UI) */
+export async function deleteUser(identifier) {
+  const roll = typeof identifier === "string" ? identifier : identifier?.roll;
+  if (!roll) throw new Error("deleteUser requires a student roll");
+  return tryFetch(`/students/${encodeURIComponent(roll)}`, {
+    method: "DELETE",
   });
 }
 
 /* Drop a student from a course */
 export async function dropStudentFromCourse({ courseId, roll }) {
-  return tryFetch(`/courses/${courseId}/drop`, { method: 'POST', body: JSON.stringify({ roll }), headers: { 'Content-Type': 'application/json' } }, () => {
-    const d = readDemo();
-    const idx = d.courses.findIndex(c => c.id === courseId);
-    if (idx >= 0) {
-      d.courses[idx].students = (d.courses[idx].students || []).filter(s => s.roll !== roll);
-      writeDemo(d);
-      return { ok: true };
-    }
-    throw new Error('Course not found');
+  return tryFetch(`/courses/${courseId}/drop`, {
+    method: "POST",
+    body: JSON.stringify({ roll }),
   });
 }
 
 /* Assign / enroll a student to a course */
 export async function assignStudentToCourse({ courseId, roll }) {
-  return tryFetch(`/courses/${courseId}/assign`, { method: 'POST', body: JSON.stringify({ roll }), headers: { 'Content-Type': 'application/json' } }, () => {
-    const d = readDemo();
-    const course = d.courses.find(c => c.id === courseId);
-    if (!course) throw new Error('Course not found');
-    const student = d.students.find(s => s.roll === roll) || { roll, name: roll };
-    course.students = course.students || [];
-    if (!course.students.find(s => s.roll === roll)) course.students.push(student);
-    writeDemo(d);
-    return { ok: true };
+  return tryFetch(`/courses/${courseId}/assign`, {
+    method: "POST",
+    body: JSON.stringify({ roll }),
   });
 }
 
 /* Fees */
 export async function fetchStudentFees() {
-  return tryFetch('/fees', {}, () => {
-    const d = readDemo();
-    return d.fees.slice();
-  });
+  return tryFetch("/fees", {});
 }
 
 export async function updateStudentFee({ roll, fee }) {
-  return tryFetch(`/fees/${roll}`, { method: 'PUT', body: JSON.stringify({ fee }), headers: { 'Content-Type': 'application/json' } }, () => {
-    const d = readDemo();
-    const idx = d.fees.findIndex(f => f.roll === roll);
-    if (idx >= 0) d.fees[idx].fee = fee;
-    else d.fees.push({ roll, name: roll, fee });
-    writeDemo(d);
-    return { ok: true };
+  return tryFetch(`/fees/${encodeURIComponent(roll)}`, {
+    method: "PUT",
+    body: JSON.stringify({ fee }),
   });
 }
 
-/* Utility: reset demo data (for development) */
-export function resetDemoData() {
-  localStorage.removeItem(DEMO_KEY);
-  return seededDemoData();
+/* Login function — store token on success to let tryFetch attach it */
+export async function login(credentials) {
+  const data = await tryFetch("/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+  // assume backend returns { token, user } — store token for subsequent requests
+  if (data && data.token) {
+    localStorage.setItem("auth_token", data.token);
+  }
+  return data;
 }
 
-/* Expose demo read/write for debugging */
-export function _readDemoForDebug() {
-  return readDemo();
+/* Fetch all users (admin list) — added to fix managestudent.jsx import */
+export async function fetchAllUsers() {
+  // endpoint: GET /api/admin/users
+  return tryFetch("/users", {});
 }
+
+/**
+ * Backend API endpoints summary:
+ *
+ * - `GET /admin`: Admin dashboard summary
+ * - `GET /leaves`: List all leaves (faculty)
+ * - `POST /leaves/{id}/approve`: Approve a leave request
+ * - `POST /leaves/{id}/reject`: Reject a leave request
+ * - `GET /faculty`: List all faculty members
+ * - `GET /courses`: List all courses
+ * - `GET /students`: List all students
+ * - `DELETE /students/{roll}`: Delete a student
+ * - `POST /courses/{courseId}/drop`: Drop a student from a course
+ * - `POST /courses/{courseId}/assign`: Assign a student to a course
+ * - `GET /fees`: Get all student fees
+ * - `PUT /fees/{roll}`: Update a student's fee
+ * - `POST /login`: Authenticate and login
+ */

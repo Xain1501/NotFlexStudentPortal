@@ -21,7 +21,7 @@ object "SystemConfig:RegistrationPeriod" as RegPeriod {
   is_active = false
 }
 
-object "FacultyAttendance:FacultyAttendance" as FacAtt {
+object " : " as FacAtt {
   attendance_id = 901
   faculty_id = 401
   date = "2024-09-10"

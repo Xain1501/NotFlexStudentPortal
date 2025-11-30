@@ -1,109 +1,61 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../Student/attendance.css";
-
-const REG_KEY = "course_registrations";
-const ATT_KEY = "attendance_records";
-
-// small static course catalog (keeps names). You can later load from API or departments_store.
-const COURSE_CATALOG = [
-  { code: "CS301", name: "Data Structures" },
-  { code: "CS302", name: "Operating Systems" },
-  { code: "CS303", name: "Databases" },
-  { code: "CS304", name: "Computer Networks" },
-  { code: "CS305", name: "Software Engineering" },
-];
-
-function loadRegistrations() {
-  try {
-    const raw = localStorage.getItem(REG_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error("loadRegistrations error:", e);
-    return [];
-  }
-}
-function loadAttendance() {
-  try {
-    const raw = localStorage.getItem(ATT_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    console.error("loadAttendance error:", e);
-    return [];
-  }
-}
+import { getAttendance, getEnrolledCourses } from "./api";
 
 export default function AttendancePage() {
-  // student identity (enter roll to view your courses/attendance)
   const [studentRoll, setStudentRoll] = useState("");
   const [studentName, setStudentName] = useState("");
-
-  // enrolled course codes for this student (derived from registrations)
-  const [enrolledCourseIds, setEnrolledCourseIds] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState("");
-
-  // attendance records (all), we'll filter per selected course
-  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [catalogMap, setCatalogMap] = useState(new Map());
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courseRecords, setCourseRecords] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // load attendance and registrations on mount
-    setAttendanceRecords(loadAttendance());
-
-    const refresh = () => {
-      setAttendanceRecords(loadAttendance());
-      // recompute enrolled courses if roll set
-      if (studentRoll) {
-        const regs = loadRegistrations();
-        const ids = regs.filter(r => String(r.student?.roll) === String(studentRoll)).map(r => r.courseId);
-        setEnrolledCourseIds(Array.from(new Set(ids)));
-        if (!ids.includes(selectedCourse)) {
-          setSelectedCourse(ids[0] || "");
-        }
+    async function load() {
+      setLoading(true);
+      try {
+        const courses = await getEnrolledCourses();
+        const arr = Array.isArray(courses) ? courses : [];
+        setEnrolledCourses(arr);
+        const map = new Map(arr.map((c) => [c.code || c.id || c.title, c.title || c.code || String(c.id)]));
+        setCatalogMap(map);
+      } catch (e) {
+        setError(e.message || String(e));
+      } finally {
+        setLoading(false);
       }
-    };
-
-    // listen for updates
-    window.addEventListener("storage", refresh);
-    window.addEventListener("course_registrations_updated", refresh);
-    window.addEventListener("attendance_updated", refresh);
-
-    // cleanup
-    return () => {
-      window.removeEventListener("storage", refresh);
-      window.removeEventListener("course_registrations_updated", refresh);
-      window.removeEventListener("attendance_updated", refresh);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studentRoll]);
-
-  // recompute enrolled courses whenever studentRoll changes
-  useEffect(() => {
-    const regs = loadRegistrations();
-    const ids = regs.filter(r => String(r.student?.roll) === String(studentRoll)).map(r => r.courseId);
-    setEnrolledCourseIds(Array.from(new Set(ids)));
-    setSelectedCourse(prev => (ids.includes(prev) ? prev : (ids[0] || "")));
-  }, [studentRoll]);
-
-  // build catalog map for names
-  const catalogMap = useMemo(() => {
-    const m = new Map();
-    COURSE_CATALOG.forEach(c => m.set(c.code, c.name));
-    return m;
+    }
+    load();
   }, []);
 
-  // records for selected course
-  const courseRecords = attendanceRecords
-    .filter(r => r.courseId === selectedCourse)
-    .slice()
-    .sort((a, b) => b.date.localeCompare(a.date));
+  useEffect(() => {
+    if (!selectedCourse) {
+      setCourseRecords([]);
+      return;
+    }
+    async function loadAttendance() {
+      setLoading(true);
+      try {
+        const records = await getAttendance();
+        const courseRecords = Array.isArray(records) ? records.filter((r) => r.course === selectedCourse) : [];
+        setCourseRecords(courseRecords);
+      } catch (e) {
+        setError(e.message || String(e));
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadAttendance();
+  }, [selectedCourse]);
 
-  // for display: map each record to student's own status
-  const displayRows = courseRecords.map(rec => {
-    const isPresent = (rec.present || []).some(p => String(p) === String(studentRoll));
-    const isAbsent = (rec.absent || []).some(a => String(a) === String(studentRoll));
-    const status = isPresent ? "Present" : (isAbsent ? "Absent" : "Not marked");
-    return { ...rec, status };
-  });
+  const displayRows = courseRecords || [];
+  const enrolledCourseIds = enrolledCourses.map((c) => c.code || c.id || String(c.title));
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div className="attendance-page my-4">
@@ -113,7 +65,6 @@ export default function AttendancePage() {
       </div>
 
       <div className="row gap-3 mt-4">
-        {/* Left - Enrolled courses */}
         <div className="col-12 col-md-4">
           <div className="dashboard-card p-3">
             <div className="mb-3">
@@ -142,7 +93,6 @@ export default function AttendancePage() {
           </div>
         </div>
 
-        {/* Right - Attendance for selected course */}
         <div className="col-12 col-md-7">
           <div className="dashboard-card p-3">
             <h5 className="card-title">{selectedCourse ? `${selectedCourse} — ${catalogMap.get(selectedCourse) || ""}` : "Select a course"}</h5>

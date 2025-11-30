@@ -49,8 +49,8 @@ module StudentPortal {
     boolean createUserWithProfile(in UserData userData, in ProfileData profileData);
     boolean deleteUser(in long userId);
     boolean toggleUserStatus(in long userId);
-    boolean markFacultyAttendance(in FacultyAttendanceData data);
-    FacultyAttendanceSummaryList getFacultyAttendanceSummary();
+    boolean mark (in  Data data);
+     SummaryList get Summary();
     
   };
   
@@ -129,7 +129,7 @@ module StudentPortal {
     string status;
   };
   
-  struct FacultyAttendanceData {
+  struct  Data {
     long facultyId;
     string attendanceDate;
     string session;

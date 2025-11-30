@@ -1,8 +1,0 @@
-Flask
-Flask-Cors
-PyMySQL
-PyJWT
-python-dotenv
-pytest
-requests
-passlib

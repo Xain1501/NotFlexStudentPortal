@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link, Outlet } from "react-router-dom";
-import { useState } from "react";
+import { getMarks } from "./api";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 import "../Student/marks.css";
@@ -55,11 +55,34 @@ function calcTotal(marks) {
 
 export default function MarksPage() {
   const [selectedCode, setSelectedCode] = useState(courses[0].code);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      setLoading(true);
+      try {
+        await getMarks();
+      } catch (e) {
+        if (mounted) setErr(e.message || String(e));
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (loading) return <div>Loading marks...</div>;
+  if (err) return <div>Error: {err}</div>;
 
   const selectedCourse = courses.find((c) => c.code === selectedCode);
 
   return (
-    <div className="marks-page  my-4">
+    <div className="marks-page my-4">
       {/* Header */}
 
       <div className="marks-header">
@@ -88,7 +111,6 @@ export default function MarksPage() {
                       <div className="fw-bold text-start">{course.code}</div>
                       <small className="text-muted">{course.name}</small>
                     </div>
-                    
                   </button>
                 ))}
               </div>
@@ -148,8 +170,6 @@ export default function MarksPage() {
                   );
                 })}
               </div>
-
-             
             </div>
           </div>
         </div>

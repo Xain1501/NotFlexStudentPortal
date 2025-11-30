@@ -1,5 +1,11 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Outlet, NavLink, Link, useNavigate, useLocation } from "react-router-dom";
+import {
+  Outlet,
+  NavLink,
+  Link,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
 import "./layout.css";
 
 export default function AdminLayout() {
@@ -57,28 +63,61 @@ export default function AdminLayout() {
 
   const navLinks = (
     <>
-      <NavLink to="/admin" end className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/admin"
+        end
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Home
       </NavLink>
-      <NavLink to="/admin/facultyattendance" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/admin/ "
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Mark Attendance
       </NavLink>
-      <NavLink to="/admin/approveleave" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/admin/approveleave"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Approve Leave
       </NavLink>
-      <NavLink to="/admin/coursemanagement" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/admin/coursemanagement"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Courses
       </NavLink>
-      <NavLink to="/admin/feestructure" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/admin/feestructure"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Fees
       </NavLink>
-      <NavLink to="/admin/managestudent" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/admin/managestudent"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Manage Students
       </NavLink>
-      <NavLink to="/admin/managefaculty" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/admin/managefaculty"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Manage Faculty
       </NavLink>
-      <NavLink to="/admin/managedepartment" className="nav-link" onClick={() => setMobileOpen(false)}>
+      <NavLink
+        to="/admin/managedepartment"
+        className="nav-link"
+        onClick={() => setMobileOpen(false)}
+      >
         Manage Departments
       </NavLink>
     </>
@@ -89,7 +128,9 @@ export default function AdminLayout() {
       <header className="admin-topbar d-flex align-items-center justify-content-between px-3">
         <div className="d-flex align-items-center position-relative">
           <button
-            className={`btn btn-sm btn-light d-md-none me-2 mobile-hamburger-btn ${mobileOpen ? "active" : ""}`}
+            className={`btn btn-sm btn-light d-md-none me-2 mobile-hamburger-btn ${
+              mobileOpen ? "active" : ""
+            }`}
             type="button"
             aria-label="Toggle navigation"
             aria-controls="mobile-nav"
@@ -99,13 +140,17 @@ export default function AdminLayout() {
             ☰
           </button>
 
-          <Link to="/admin" className="brand ms-1">NotFlex</Link>
+          <Link to="/admin" className="brand ms-1">
+            NotFlex
+          </Link>
 
           {/* Mobile nav (shown only on small screens) */}
           <nav
             id="mobile-nav"
             ref={mobileNavRef}
-            className={`student-topnav-mobile d-md-none ${mobileOpen ? "open" : ""}`}
+            className={`student-topnav-mobile d-md-none ${
+              mobileOpen ? "open" : ""
+            }`}
             aria-hidden={!mobileOpen}
           >
             {navLinks}
@@ -113,9 +158,7 @@ export default function AdminLayout() {
         </div>
 
         <div className="d-flex align-items-center">
-          <nav className="d-none d-md-flex admin-topnav">
-            {navLinks}
-          </nav>
+          <nav className="d-none d-md-flex admin-topnav">{navLinks}</nav>
 
           <div className="ms-3 dropdown" ref={menuRef}>
             <button
@@ -129,7 +172,9 @@ export default function AdminLayout() {
             </button>
 
             <ul
-              className={`dropdown-menu dropdown-menu-end ${menuOpen ? "show" : ""}`}
+              className={`dropdown-menu dropdown-menu-end ${
+                menuOpen ? "show" : ""
+              }`}
               style={{ minWidth: 140 }}
             >
               <li>
