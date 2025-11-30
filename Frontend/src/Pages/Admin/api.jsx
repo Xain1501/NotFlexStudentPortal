@@ -131,14 +131,24 @@ export async function updateStudentFee({ roll, fee }) {
 
 /* Login function — store token on success to let tryFetch attach it */
 export async function login(credentials) {
-  const data = await tryFetch("/login", {
-    method: "POST",
-    body: JSON.stringify(credentials),
-  });
-  // assume backend returns { token, user } — store token for subsequent requests
-  if (data && data.token) {
-    localStorage.setItem("auth_token", data.token);
+  const { username, password } = credentials || {};
+  if (!username || !password) {
+    throw new Error("login requires { username, password }");
   }
+
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+
+  if (!res.ok) throw new Error("Login failed: " + res.status);
+  const data = await res.json();
+
+  if (data?.data?.token) {
+    localStorage.setItem("auth_token", data.data.token);
+  }
+
   return data;
 }
 
@@ -165,8 +175,3 @@ export async function fetchAllUsers() {
  * - `PUT /fees/{roll}`: Update a student's fee
  * - `POST /login`: Authenticate and login
  */
-await fetch("http://localhost:5000/api/auth/login", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ username, password }),
-});
