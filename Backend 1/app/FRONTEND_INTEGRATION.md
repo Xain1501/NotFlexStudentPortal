@@ -1,7 +1,7 @@
 # Frontend Integration Guide
 
 ## Overview
-This document helps frontend developers integrate with the Student Portal backend. It summarizes authentication, the main API endpoints, request/response formats, environment configuration, and recommended security improvements.
+This document helps frontend developers integrate with the Student Portal app. It summarizes authentication, the main API endpoints, request/response formats, environment configuration, and recommended security improvements.
 
 Base URL: http://localhost:5000
 React dev UI (default): http://localhost:5173

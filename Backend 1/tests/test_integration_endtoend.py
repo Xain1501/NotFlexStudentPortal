@@ -1,7 +1,7 @@
 import pytest
 import random, string
-from Backend.website.models import UserModel, CourseModel, AdminModel, FacultyModel, StudentModel, DepartmentModel
-from Backend.database.connection import get_connection, execute_query, init_db
+from app.website.models import UserModel, CourseModel, AdminModel, FacultyModel, StudentModel, DepartmentModel
+from app.database.connection import get_connection, execute_query, init_db
 
 
 def random_str(n=6):

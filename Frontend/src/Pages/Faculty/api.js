@@ -1,4 +1,4 @@
-// small demo API layer (in-memory). Replace with real fetch/axios calls to your backend.
+// small demo API layer (in-memory). Replace with real fetch/axios calls to your app.
 import teacherData from "../Faculty/teacherData";
 import { fetchJson } from "../../api/client";
 

@@ -5,7 +5,7 @@ COMPLETE VIEWS.PY - ALL ROUTES FIXED
 from flask import Blueprint, request, jsonify
 from .models import StudentModel,UserModel, CourseModel, FacultyModel,AdminModel,DepartmentModel
 from .auth import token_required
-from Backend.database.connection import execute_query
+from app.database.connection import execute_query
 
 views = Blueprint('views', __name__)
 
@@ -1530,7 +1530,7 @@ def get_pending_leaves(current_user):
             WHERE fl.status = 'pending'
             ORDER BY fl.applied_at DESC
         """
-        from Backend.database.connection import execute_query
+        from app.database.connection import execute_query
         leaves = execute_query(query)
         
         return jsonify({
@@ -1550,7 +1550,7 @@ def approve_leave(current_user, leave_id):
         if current_user['role'] != 'admin':
             return jsonify({'success': False, 'message': 'Access denied'}), 403
         
-        from Backend.database.connection import execute_query
+        from app.database.connection import execute_query
         query = "UPDATE faculty_leaves SET status = 'approved' WHERE leave_id = %s"
         execute_query(query, (leave_id,), fetch=False)
         
@@ -1571,7 +1571,7 @@ def reject_leave(current_user, leave_id):
         if current_user['role'] != 'admin':
             return jsonify({'success': False, 'message': 'Access denied'}), 403
         
-        from Backend.database.connection import execute_query
+        from app.database.connection import execute_query
         query = "UPDATE faculty_leaves SET status = 'rejected' WHERE leave_id = %s"
         execute_query(query, (leave_id,), fetch=False)
         

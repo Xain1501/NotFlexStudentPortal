@@ -2,7 +2,7 @@
 Database Models and CRUD Operations (PYMYSQL VERSION)
 """
 
-from Backend.database.connection import execute_query,transaction
+from app.database.connection import execute_query,transaction
 import datetime
 import re
 import secrets

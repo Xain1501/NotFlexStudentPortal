@@ -1,4 +1,4 @@
-from Backend.database.connection import execute_query
+from app.database.connection import execute_query
 
 try:
     execute_query("CREATE TABLE IF NOT EXISTS student_code_seq (year_small INT PRIMARY KEY, last_seq INT DEFAULT 0)", fetch=False)

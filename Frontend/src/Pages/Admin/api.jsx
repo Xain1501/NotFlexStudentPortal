@@ -20,7 +20,7 @@
  *    updateStudentFee
  *  } from '../Admin/api';
  *
- * Replace or wire the endpoints (URL paths) below to point to your real backend.
+ * Replace or wire the endpoints (URL paths) below to point to your real app.
  */
 
 const API_BASE = "/api/admin"; // change to your backend base path if needed
@@ -165,3 +165,8 @@ export async function fetchAllUsers() {
  * - `PUT /fees/{roll}`: Update a student's fee
  * - `POST /login`: Authenticate and login
  */
+await fetch("http://localhost:5000/api/auth/login", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ username, password }),
+});

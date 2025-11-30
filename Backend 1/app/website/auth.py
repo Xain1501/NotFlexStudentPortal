@@ -7,7 +7,7 @@ from .models import UserModel
 import jwt
 import datetime
 from functools import wraps
-from Backend.database.connection import execute_query
+from app.database.connection import execute_query
 
 auth = Blueprint('auth', __name__)
 

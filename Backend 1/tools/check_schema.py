@@ -1,4 +1,4 @@
-from Backend.database.connection import execute_query, DB_CONFIG
+from app.database.connection import execute_query, DB_CONFIG
 
 expected_columns = {
     'faculty': ['hire_date', 'email', 'salary', 'department_id'],

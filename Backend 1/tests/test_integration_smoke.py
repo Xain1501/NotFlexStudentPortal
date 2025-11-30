@@ -1,7 +1,7 @@
 import os
 import pytest
-from Backend.database.connection import init_db, get_connection
-from Backend.website import create_app
+from app.database.connection import init_db, get_connection
+from app.website import create_app
 import requests
 
 

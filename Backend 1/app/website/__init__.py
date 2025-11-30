@@ -1,7 +1,7 @@
 """
 Flask App Initialization (package initializer)
 This module mirrors the existing `init.py` and provides the `create_app` factory
-so `from Backend.website import create_app` works for top-level `main.py`.
+so `from app.website import create_app` works for top-level `main.py`.
 """
 from flask import Flask
 from flask_cors import CORS

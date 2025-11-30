@@ -1,6 +1,6 @@
 import pytest
-from Backend.website.models import UserModel
-from Backend.website.models import StudentModel
+from app.website.models import UserModel
+from app.website.models import StudentModel
 
 
 class DummyCursor:
@@ -32,7 +32,7 @@ class DummyConnection:
 
 def test_create_user_with_profile_disallows_multiple_admins(monkeypatch):
     # Simulate an existing admin in the DB
-    monkeypatch.setattr('Backend.website.models.execute_query', lambda q, *a, **kw: [{'cnt': 1}] if 'COUNT(*)' in q else [])
+    monkeypatch.setattr('app.website.models.execute_query', lambda q, *a, **kw: [{'cnt': 1}] if 'COUNT(*)' in q else [])
     success, res = UserModel.create_user_with_profile({'role': 'admin', 'username': None, 'email': 'a@b.com'}, {})
     assert not success
     assert 'Only one admin is allowed' in res.get('message')
@@ -40,7 +40,7 @@ def test_create_user_with_profile_disallows_multiple_admins(monkeypatch):
 
 def test_create_user_with_profile_allows_when_no_admin(monkeypatch):
     # Simulate no existing admin, and creation flows
-    monkeypatch.setattr('Backend.website.models.execute_query', lambda q, *a, **kw: [{'cnt': 0}] if 'COUNT(*)' in q else [])
+    monkeypatch.setattr('app.website.models.execute_query', lambda q, *a, **kw: [{'cnt': 0}] if 'COUNT(*)' in q else [])
     # Patch transaction so it doesn't try to access a real DB cursor
     class DummyCtxMgr:
         def __enter__(self):
@@ -53,7 +53,7 @@ def test_create_user_with_profile_allows_when_no_admin(monkeypatch):
             return ('conn', Cur())
         def __exit__(self, exc_type, exc, tb):
             return False
-    monkeypatch.setattr('Backend.website.models.transaction', lambda : DummyCtxMgr())
+    monkeypatch.setattr('app.website.models.transaction', lambda : DummyCtxMgr())
     success, res = UserModel.create_user_with_profile({'role': 'admin', 'username': None, 'email': 'a@b.com'}, {})
     assert success
     assert isinstance(res, dict)
@@ -87,12 +87,12 @@ def test_mark_fee_paid_recomputes(monkeypatch):
             return [{'student_id': 99, 'semester': 'Fall'}]
         return []
 
-    monkeypatch.setattr('Backend.website.models.execute_query', fake_execute)
+    monkeypatch.setattr('app.website.models.execute_query', fake_execute)
     def fake_compute(student_id, semester):
         called['recomputed'] = True
         return True
-    monkeypatch.setattr('Backend.website.models.StudentModel.compute_and_update_fee_for_semester', fake_compute)
-    from Backend.website.models import DepartmentModel
+    monkeypatch.setattr('app.website.models.StudentModel.compute_and_update_fee_for_semester', fake_compute)
+    from app.website.models import DepartmentModel
     res = DepartmentModel.mark_fee_paid(1)
     assert res
     assert called['recomputed']

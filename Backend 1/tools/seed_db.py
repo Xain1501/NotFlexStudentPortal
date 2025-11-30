@@ -6,8 +6,8 @@ import os, sys
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
-from Backend.database.connection import execute_query, init_db
-from Backend.website.models import UserModel, DepartmentModel, CourseModel, FacultyModel, AdminModel, StudentModel
+from app.database.connection import execute_query, init_db
+from app.website.models import UserModel, DepartmentModel, CourseModel, FacultyModel, AdminModel, StudentModel
 import datetime
 
 # Initialize DB and migrations
@@ -53,7 +53,7 @@ faculty_id = res.get('faculty_id') if ok else None
 # Create course section (admin)
 if course_id and faculty_id:
     print('Creating course section...')
-    from Backend.website.models import AdminModel
+    from app.website.models import AdminModel
     AdminModel.create_course_section(course_id, faculty_id, 'S1', 'Fall', 2025, 'MTW', 'R101', 50)
     print('Section created')
 
@@ -68,7 +68,7 @@ student_id = res.get('student_id') if ok else None
 row = execute_query('SELECT section_id FROM course_sections WHERE course_id = %s LIMIT 1', (course_id,))
 section_id = row[0]['section_id'] if row else None
 if student_id and section_id:
-    from Backend.website.models import CourseModel
+    from app.website.models import CourseModel
     CourseModel.enroll_student(student_id, section_id)
     print('Student enrolled in section', section_id)
 

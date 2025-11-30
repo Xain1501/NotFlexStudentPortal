@@ -33,5 +33,5 @@ pytest -q
 - For local dev, CORS allows `http://localhost:5173`.
 
 5) Important Info
-- `main.py` now imports `Backend.website` and `Backend.database.connection` to avoid path issues.
+- `main.py` now imports `app.website` and `app.database.connection` to avoid path issues.
 - For VSCode, `.vscode/settings.json` adds `Backend` as an `extraPath` so Pylance resolves imports. If you still see missing import errors, add `Backend` to your workspace or configure `PYTHONPATH`.
