@@ -28,8 +28,14 @@ export default function StudentLayout() {
 
   function handleLogout(e) {
     e.preventDefault();
+    // Clear all authentication data
     try {
       localStorage.removeItem("authToken");
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("username");
+      localStorage.removeItem("token");
     } catch (err) {
       // ignore
     }
@@ -60,10 +66,11 @@ export default function StudentLayout() {
     setMenuOpen(false);
   }, [location]);
 
+  // ✅ FIXED: Correct navigation paths that match your route definitions
   const navLinks = (
     <>
       <NavLink
-        to="/"
+        to="/student"
         end
         className="nav-link"
         onClick={() => setMobileOpen(false)}
@@ -92,7 +99,7 @@ export default function StudentLayout() {
         Attendance
       </NavLink>
       <NavLink
-        to="/student/feedetail"
+        to="/student/fees"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >
@@ -106,7 +113,7 @@ export default function StudentLayout() {
         Timetable
       </NavLink>
       <NavLink
-        to="/student/courseregistration"
+        to="/student/course-registration"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >
@@ -132,7 +139,7 @@ export default function StudentLayout() {
             ☰
           </button>
 
-          <Link to="/" className="brand ms-1">
+          <Link to="/student" className="brand ms-1">
             NotFlex
           </Link>
 

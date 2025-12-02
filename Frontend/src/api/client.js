@@ -37,7 +37,7 @@ export async function fetchJson(roleBase, endpoint, options = {}) {
         const errorData = await response.json();
         errorMessage = errorData.message || errorMessage;
       } catch (e) {
-        errorMessage = response.statusText || errorMessage;
+        errorMessage = response.statusText || e;
       }
       throw new Error(errorMessage);
     }

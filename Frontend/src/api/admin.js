@@ -329,14 +329,15 @@ export async function fetch(date) {
 }
 
 /* ========== ENROLLMENT FUNCTIONS ========== */
-
 export async function dropStudentFromCourse({ courseId, studentId }) {
   return apiRequest("/api/admin/course-management/drop", {
     method: "POST",
-    body: JSON.stringify({ enrollment_id: courseId }),
+    body: JSON.stringify({ 
+      enrollment_id: courseId,
+      student_id: studentId 
+    }),
   });
 }
-
 export async function assignStudentToCourse({ courseId, studentId }) {
   return apiRequest("/api/admin/course-management/enroll", {
     method: "POST",
@@ -364,9 +365,9 @@ export async function deleteStudent(token, id) {
   return removeStudent(id);
 }
 
-export async function updateStudentFee({ roll, fee }) {
-  return apiRequest(`/api/admin/fees/student/${roll}`, {
-    method: "PUT",
+export async function updateStudentFee({ fee }) { // Remove 'roll'
+  return apiRequest(`/api/admin/fees/student`, { // Adjust endpoint if needed
+    method: "PUT", 
     body: JSON.stringify({ amount: fee }),
   });
 }

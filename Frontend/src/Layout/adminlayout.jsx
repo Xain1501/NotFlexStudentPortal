@@ -31,6 +31,10 @@ export default function AdminLayout() {
     // Clear authentication data here (adjust to your auth)
     try {
       localStorage.removeItem("authToken");
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("username");
     } catch (err) {
       // ignore
     }
@@ -61,6 +65,7 @@ export default function AdminLayout() {
     setMenuOpen(false);
   }, [location]);
 
+  // ✅ FIXED: Correct navigation paths that match your route definitions
   const navLinks = (
     <>
       <NavLink
@@ -72,49 +77,49 @@ export default function AdminLayout() {
         Home
       </NavLink>
       <NavLink
-        to="/admin/ "
+        to="/admin/faculty-attendance"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >
         Mark Attendance
       </NavLink>
       <NavLink
-        to="/admin/approveleave"
+        to="/admin/leaves"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >
         Approve Leave
       </NavLink>
       <NavLink
-        to="/admin/coursemanagement"
+        to="/admin/courses"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >
         Courses
       </NavLink>
       <NavLink
-        to="/admin/feestructure"
+        to="/admin/fees"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >
         Fees
       </NavLink>
       <NavLink
-        to="/admin/managestudent"
+        to="/admin/students"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >
         Manage Students
       </NavLink>
       <NavLink
-        to="/admin/managefaculty"
+        to="/admin/faculty"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >
         Manage Faculty
       </NavLink>
       <NavLink
-        to="/admin/managedepartment"
+        to="/admin/departments"
         className="nav-link"
         onClick={() => setMobileOpen(false)}
       >

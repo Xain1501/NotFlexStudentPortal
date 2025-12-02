@@ -28,9 +28,14 @@ export default function FacultyLayout() {
 
   function handleLogout(e) {
     e.preventDefault();
-    // replace this with your real logout logic (call API, clear context/redux, clear cookies, etc.)
+    // Clear all authentication data
     try {
       localStorage.removeItem("authToken");
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("user_id");
+      localStorage.removeItem("username");
+      localStorage.removeItem("token");
     } catch (err) {
       // ignore
     }
@@ -62,6 +67,7 @@ export default function FacultyLayout() {
     setMenuOpen(false);
   }, [location]);
 
+  // ✅ FIXED: Correct navigation paths that match your route definitions
   const navLinks = (
     <>
       <NavLink
@@ -92,13 +98,6 @@ export default function FacultyLayout() {
         onClick={() => setMobileOpen(false)}
       >
         Student Marks
-      </NavLink>
-      <NavLink
-        to="/faculty/ "
-        className="nav-link"
-        onClick={() => setMobileOpen(false)}
-      >
-        Faculty Attendance
       </NavLink>
       <NavLink
         to="/faculty/timetable"

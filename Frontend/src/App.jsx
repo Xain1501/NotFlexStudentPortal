@@ -2,8 +2,9 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { isAuthenticated, getCurrentUser } from "./api/client";
 import "./App.css";
 
+
 // Student pages
-import Login from "./Pages/Shared/Login.jsx";
+import Login from "./Pages/Shared/login.jsx";
 import StudentHome from "./Pages/Student/home.jsx";
 import Transcript from "./Pages/Student/transcript.jsx";
 import StudentMarks from "./Pages/Student/marks.jsx";
@@ -41,7 +42,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   const user = getCurrentUser();
-  
+
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
@@ -53,12 +54,12 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 const PublicRoute = ({ children }) => {
   if (isAuthenticated()) {
     const user = getCurrentUser();
-    switch(user.role) {
-      case 'admin':
+    switch (user.role) {
+      case "admin":
         return <Navigate to="/admin" replace />;
-      case 'student':
+      case "student":
         return <Navigate to="/student" replace />;
-      case 'faculty':
+      case "faculty":
         return <Navigate to="/faculty" replace />;
       default:
         return <Navigate to="/" replace />;
@@ -71,21 +72,27 @@ export default function App() {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/login" element={
-        <PublicRoute>
-          <Login />
-        </PublicRoute>
-      } />
-      
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+
       {/* Default route redirects to login */}
       <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* Student Routes */}
-      <Route path="/student" element={
-        <ProtectedRoute allowedRoles={['student']}>
-          <StudentLayout />
-        </ProtectedRoute>
-      }>
+      <Route
+        path="/student"
+        element={
+          <ProtectedRoute allowedRoles={["student"]}>
+            <StudentLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<StudentHome />} />
         <Route path="transcript" element={<Transcript />} />
         <Route path="marks" element={<StudentMarks />} />
@@ -96,11 +103,14 @@ export default function App() {
       </Route>
 
       {/* Faculty Routes */}
-      <Route path="/faculty" element={
-        <ProtectedRoute allowedRoles={['faculty']}>
-          <FacultyLayout />
-        </ProtectedRoute>
-      }>
+      <Route
+        path="/faculty"
+        element={
+          <ProtectedRoute allowedRoles={["faculty"]}>
+            <FacultyLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<TeacherHome />} />
         <Route path="attendance" element={<MarkAttendance />} />
         <Route path="leave" element={<Leave />} />
@@ -109,11 +119,14 @@ export default function App() {
       </Route>
 
       {/* Admin Routes */}
-      <Route path="/admin" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminLayout />
-        </ProtectedRoute>
-      }>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<AdminHome />} />
         <Route path="leaves" element={<ApproveLeave />} />
         <Route path="courses" element={<CourseManagement />} />
@@ -125,12 +138,15 @@ export default function App() {
       </Route>
 
       {/* Unauthorized Page */}
-      <Route path="/unauthorized" element={
-        <div className="text-center py-5">
-          <h1>Unauthorized</h1>
-          <p>You don't have permission to access this page.</p>
-        </div>
-      } />
+      <Route
+        path="/unauthorized"
+        element={
+          <div className="text-center py-5">
+            <h1>Unauthorized</h1>
+            <p>You don't have permission to access this page.</p>
+          </div>
+        }
+      />
 
       {/* 404 fallback */}
       <Route
