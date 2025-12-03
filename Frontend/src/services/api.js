@@ -113,6 +113,10 @@ export const adminAPI = {
   deleteStudent: (studentId) => api.delete(`/api/admin/students/${studentId}`),
   toggleStudentStatus: (studentId) =>
     api.put(`/api/admin/students/${studentId}/toggle-status`),
+  resetStudentPassword: (studentId) =>
+    api.post(`/api/admin/students/${studentId}/reset-password`),
+  changeStudentPassword: (studentId, password) =>
+    api.put(`/api/admin/students/${studentId}/change-password`, { password }),
 
   // Faculty
   getAllFaculty: () => api.get("/api/admin/faculty"),
@@ -123,6 +127,10 @@ export const adminAPI = {
   deleteFaculty: (facultyId) => api.delete(`/api/admin/faculty/${facultyId}`),
   toggleFacultyStatus: (facultyId) =>
     api.put(`/api/admin/faculty/${facultyId}/toggle-status`),
+  resetFacultyPassword: (facultyId) =>
+    api.post(`/api/admin/faculty/${facultyId}/reset-password`),
+  changeFacultyPassword: (facultyId, password) =>
+    api.put(`/api/admin/faculty/${facultyId}/change-password`, { password }),
 
   // Departments
   getDepartments: () => api.get("/api/admin/departments"),

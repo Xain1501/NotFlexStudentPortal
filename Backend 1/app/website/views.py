@@ -1206,6 +1206,19 @@ def get_course_students_admin(current_user, section_id):
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
 
 
+@views.route('/api/admin/courses', methods=['GET'])
+@token_required
+def get_all_courses_admin(current_user):
+    """Get all courses (Admin only)"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    try:
+        courses = CourseModel.get_all_courses()
+        return jsonify({'success': True, 'data': {'courses': courses}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+
 @views.route('/api/admin/courses', methods=['POST'])
 @token_required
 def create_course_admin(current_user):
@@ -1828,6 +1841,77 @@ def delete_student_admin(current_user, student_id):
         
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@views.route('/api/admin/students/<int:student_id>/reset-password', methods=['POST'])
+@token_required
+def reset_student_password(current_user, student_id):
+    """Reset student password to a random one (Admin only)"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        # Get user_id from student
+        student = StudentModel.get_student_by_id(student_id)
+        if not student:
+            return jsonify({'success': False, 'message': 'Student not found'}), 404
+        
+        # Reset password
+        new_password = UserModel.reset_user_password(student['user_id'])
+        
+        if new_password:
+            return jsonify({
+                'success': True,
+                'message': 'Password reset successfully',
+                'new_password': new_password
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to reset password'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@views.route('/api/admin/students/<int:student_id>/change-password', methods=['PUT'])
+@token_required
+def change_student_password(current_user, student_id):
+    """Change student password to a specific one (Admin only)"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        new_password = data.get('password')
+        
+        if not new_password:
+            return jsonify({'success': False, 'message': 'Password is required'}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
+        
+        # Get user_id from student
+        student = StudentModel.get_student_by_id(student_id)
+        if not student:
+            return jsonify({'success': False, 'message': 'Student not found'}), 404
+        
+        # Update password
+        success = UserModel.update_user_password(student['user_id'], new_password)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Password changed successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to change password'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
     # ==================== FACULTY MANAGEMENT ====================
 
 @views.route('/api/admin/faculty', methods=['GET'])
@@ -2004,6 +2088,96 @@ def create_faculty_admin(current_user):
 @token_required
 def delete_faculty_admin(current_user, faculty_id):
     """Delete faculty (Admin only)"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        # Get user_id from faculty
+        faculty = FacultyModel.get_faculty_by_id(faculty_id)
+        if not faculty:
+            return jsonify({'success': False, 'message': 'Faculty not found'}), 404
+        
+        # Delete user (cascade delete will handle faculty record)
+        delete_query = "DELETE FROM users WHERE user_id = %s"
+        execute_query(delete_query, (faculty['user_id'],), fetch=False)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Faculty deleted successfully'
+        }), 200
+        
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@views.route('/api/admin/faculty/<int:faculty_id>/reset-password', methods=['POST'])
+@token_required
+def reset_faculty_password(current_user, faculty_id):
+    """Reset faculty password to a random one (Admin only)"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        # Get user_id from faculty
+        faculty = FacultyModel.get_faculty_by_id(faculty_id)
+        if not faculty:
+            return jsonify({'success': False, 'message': 'Faculty not found'}), 404
+        
+        # Reset password
+        new_password = UserModel.reset_user_password(faculty['user_id'])
+        
+        if new_password:
+            return jsonify({
+                'success': True,
+                'message': 'Password reset successfully',
+                'new_password': new_password
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to reset password'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+
+@views.route('/api/admin/faculty/<int:faculty_id>/change-password', methods=['PUT'])
+@token_required
+def change_faculty_password(current_user, faculty_id):
+    """Change faculty password to a specific one (Admin only)"""
+    if current_user['role'] != 'admin':
+        return jsonify({'success': False, 'message': 'Access denied'}), 403
+    
+    try:
+        data = request.get_json()
+        new_password = data.get('password')
+        
+        if not new_password:
+            return jsonify({'success': False, 'message': 'Password is required'}), 400
+        
+        if len(new_password) < 6:
+            return jsonify({'success': False, 'message': 'Password must be at least 6 characters'}), 400
+        
+        # Get user_id from faculty
+        faculty = FacultyModel.get_faculty_by_id(faculty_id)
+        if not faculty:
+            return jsonify({'success': False, 'message': 'Faculty not found'}), 404
+        
+        # Update password
+        success = UserModel.update_user_password(faculty['user_id'], new_password)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Password changed successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': 'Failed to change password'
+            }), 400
+            
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
     if current_user['role'] != 'admin':
         return jsonify({'success': False, 'message': 'Access denied'}), 403
     

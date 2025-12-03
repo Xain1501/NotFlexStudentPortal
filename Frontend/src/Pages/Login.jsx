@@ -37,17 +37,17 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-dark py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-black py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-dark-800 border border-dark-700 rounded-xl shadow-2xl p-8">
+        <div className="bg-zinc-900 border border-gray-800 rounded-xl shadow-2xl p-8">
           <div className="text-center">
-            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-500/20 border border-primary-500/30">
-              <LogIn className="h-8 w-8 text-primary-400" />
+            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-blue-600 shadow-lg shadow-blue-500/20">
+              <LogIn className="h-8 w-8 text-white" />
             </div>
-            <h2 className="mt-6 text-3xl font-extrabold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+            <h2 className="mt-6 text-3xl font-extrabold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
               Student Portal
             </h2>
-            <p className="mt-2 text-sm text-dark-300">
+            <p className="mt-2 text-sm text-gray-400">
               Sign in to your account
             </p>
           </div>
@@ -114,11 +114,11 @@ export const Login = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-dark-300">
+            <p className="text-sm text-gray-400">
               Don't have an account?{" "}
               <Link
                 to="/register"
-                className="font-semibold text-primary-400 hover:text-primary-300 transition-colors"
+                className="font-semibold text-blue-400 hover:text-blue-300 transition-colors"
               >
                 Register here
               </Link>

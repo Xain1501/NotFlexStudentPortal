@@ -497,6 +497,29 @@ class UserModel:
         return None
 
     @staticmethod
+    def update_user_password(user_id, new_password):
+        """Update user password (Admin function)"""
+        query = "UPDATE users SET password_hash = %s WHERE user_id = %s"
+        try:
+            execute_query(query, (new_password, user_id), fetch=False)
+            return True
+        except Exception as e:
+            print(f"Update password error: {e}")
+            return False
+
+    @staticmethod
+    def reset_user_password(user_id):
+        """Reset user password to a random generated one (Admin function)"""
+        new_password = secrets.token_urlsafe(8)
+        query = "UPDATE users SET password_hash = %s WHERE user_id = %s"
+        try:
+            execute_query(query, (new_password, user_id), fetch=False)
+            return new_password
+        except Exception as e:
+            print(f"Reset password error: {e}")
+            return None
+
+    @staticmethod
     def create_user_with_profile(user_data, profile_data):
         """Create user and attach profile (student or faculty) in a single transaction.
         Returns tuple (success: bool, result: dict/message)
@@ -658,6 +681,17 @@ class CourseModel:
             WHERE cs.semester = %s AND cs.year = %s AND cs.is_active = TRUE
         """
         return execute_query(query, (semester, year))
+
+    @staticmethod
+    def get_all_courses():
+        """Get all courses"""
+        query = """
+            SELECT c.*, d.dept_name
+            FROM courses c
+            LEFT JOIN departments d ON c.department_id = d.dept_id
+            ORDER BY c.course_code
+        """
+        return execute_query(query)
 
     @staticmethod
     def create_course(course_code, course_name, credits, fee_per_credit=10000.00, department_id=None):

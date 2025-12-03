@@ -53,12 +53,12 @@ export const Navbar = () => {
   const navLinks = getNavLinks();
 
   return (
-    <nav className="bg-dark-900 border-b border-dark-700 shadow-2xl">
+    <nav className="bg-zinc-900 border-b border-gray-800 shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
                 Student Portal
               </span>
             </Link>
@@ -71,8 +71,8 @@ export const Navbar = () => {
                   to={link.path}
                   className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     location.pathname === link.path
-                      ? "bg-primary-500/20 text-primary-400 border border-primary-500/30"
-                      : "text-dark-200 hover:bg-dark-800 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                      : "text-gray-300 hover:bg-zinc-800 hover:text-white"
                   }`}
                 >
                   {link.name}
@@ -84,10 +84,10 @@ export const Navbar = () => {
           {/* Right side */}
           <div className="flex items-center">
             <div className="hidden md:flex md:items-center md:space-x-4">
-              <div className="flex items-center text-sm text-dark-200">
-                <User className="h-5 w-5 mr-2 text-primary-400" />
+              <div className="flex items-center text-sm text-gray-300">
+                <User className="h-5 w-5 mr-2 text-blue-400" />
                 <span className="font-medium text-white">{user?.username}</span>
-                <span className="ml-2 px-2.5 py-1 text-xs rounded-full bg-primary-500/20 text-primary-400 border border-primary-500/30 font-semibold">
+                <span className="ml-2 px-2.5 py-1 text-xs rounded-full bg-blue-600 text-white border border-blue-500 font-semibold">
                   {user?.role}
                 </span>
               </div>
@@ -104,7 +104,7 @@ export const Navbar = () => {
             <div className="md:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-md text-dark-200 hover:text-white hover:bg-dark-800"
+                className="p-2 rounded-md text-gray-300 hover:text-white hover:bg-zinc-800"
               >
                 {mobileMenuOpen ? (
                   <X className="h-6 w-6" />
@@ -119,7 +119,7 @@ export const Navbar = () => {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-dark-700 bg-dark-900">
+        <div className="md:hidden border-t border-gray-800 bg-zinc-900">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navLinks.map((link) => (
               <Link
@@ -128,15 +128,15 @@ export const Navbar = () => {
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block px-3 py-2 rounded-lg text-base font-medium ${
                   location.pathname === link.path
-                    ? "bg-primary-500/20 text-primary-400 border border-primary-500/30"
-                    : "text-dark-200 hover:bg-dark-800 hover:text-white"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                    : "text-gray-300 hover:bg-zinc-800 hover:text-white"
                 }`}
               >
                 {link.name}
               </Link>
             ))}
-            <div className="pt-4 border-t border-dark-700">
-              <div className="px-3 py-2 text-sm text-dark-200">
+            <div className="pt-4 border-t border-gray-800">
+              <div className="px-3 py-2 text-sm text-gray-300">
                 Logged in as{" "}
                 <strong className="text-white">{user?.username}</strong>
               </div>
