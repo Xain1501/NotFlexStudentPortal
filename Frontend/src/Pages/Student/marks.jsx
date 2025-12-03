@@ -1,257 +1,152 @@
-import React, { useEffect, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
-import { getMarks } from "./api";
-import "bootstrap/dist/css/bootstrap.min.css";
+import { useState, useEffect } from "react";
+import { studentAPI } from "../../services/api";
+import { Card, Table, LoadingSpinner } from "../../components/UI";
 
-import "../Student/marks.css";
-
-/*
-  Marks page
-  - Header with "Marks"
-  - Courses list (left column on desktop, accordion on mobile)
-  - Clicking a course shows marks breakdown for that course (right column on desktop)
-*/
-
-const courses = [
-  {
-    code: "CS301",
-    name: "Data Structures",
-    marks: [
-      { title: "Assignment 1", score: 18, outOf: 20 },
-      { title: "Quiz 1", score: 8, outOf: 10 },
-      { title: "Midterm", score: 42, outOf: 60 },
-      { title: "Assignment 2", score: 17, outOf: 20 },
-      { title: "Final", score: 78, outOf: 100 },
-    ],
-  },
-  {
-    code: "CS302",
-    name: "Operating Systems",
-    marks: [
-      { title: "Lab", score: 45, outOf: 50 },
-      { title: "Quiz 1", score: 9, outOf: 10 },
-      { title: "Midterm", score: 36, outOf: 60 },
-      { title: "Final", score: 72, outOf: 100 },
-    ],
-  },
-  {
-    code: "CS303",
-    name: "Databases",
-    marks: [
-      { title: "Assignment", score: 19, outOf: 20 },
-      { title: "Quiz", score: 10, outOf: 10 },
-      { title: "Project", score: 45, outOf: 50 },
-      { title: "Final", score: 85, outOf: 100 },
-    ],
-  },
-];
-
-function calcTotal(marks) {
-  const obtained = marks.reduce((s, m) => s + m.score, 0);
-  const total = marks.reduce((s, m) => s + m.outOf, 0);
-  const pct = total ? Math.round((obtained / total) * 100) : 0;
-  return { obtained, total, pct };
-}
-
-export default function MarksPage() {
-  const [selectedCode, setSelectedCode] = useState(courses[0].code);
+export const StudentMarks = () => {
+  const [marks, setMarks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    let mounted = true;
-    async function load() {
-      setLoading(true);
-      try {
-        await getMarks();
-      } catch (e) {
-        if (mounted) setErr(e.message || String(e));
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      mounted = false;
-    };
+    fetchMarks();
   }, []);
 
-  if (loading) return <div>Loading marks...</div>;
-  if (err) return <div>Error: {err}</div>;
+  const fetchMarks = async () => {
+    try {
+      setLoading(true);
+      const response = await studentAPI.getMarks();
+      if (response.data.success) {
+        setMarks(response.data.data.courses || []);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load marks");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const selectedCourse = courses.find((c) => c.code === selectedCode);
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
-    <div className="marks-page my-4">
-      {/* Header */}
+    <div className="p-6 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
+        My Marks
+      </h1>
 
-      <div className="marks-header">
-        <h1 className="marks-title text-center">Marks</h1>
-      </div>
-
-      {/* Desktop / tablet layout: left = courses, right = marks */}
-      <div className="row gx-4 gy-3 align-items-start">
-        {/* Courses list (desktop) */}
-        <div className="col-md-4 d-flex">
-          <div className="card w-100 d-flex flex-column">
-            <div className="card-body d-flex flex-column p-3">
-              <h5 className="card-title text-center mb-3">Enrolled Courses</h5>
-              <div className="list-group flex-grow-1">
-                {courses.map((course) => (
-                  <button
-                    type="button"
-                    key={course.code}
-                    className={
-                      "list-group-item list-group-item-action d-flex justify-content-between align-items-start " +
-                      (selectedCode === course.code ? "active" : "")
-                    }
-                    onClick={() => setSelectedCode(course.code)}
-                  >
-                    <div>
-                      <div className="fw-bold text-start">{course.code}</div>
-                      <small className="text-muted">{course.name}</small>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
         </div>
+      )}
 
-        {/* Marks detail (desktop) */}
-        <div className="col-md-8 d-flex">
-          <div className="card w-100 d-flex flex-column">
-            <div className="card-body d-flex flex-column p-4">
-              <div className="d-flex align-items-start justify-content-between mb-3">
-                <div>
-                  <h5 className="card-title mb-0">
-                    {selectedCourse.code} — {selectedCourse.name}
-                  </h5>
-                  <small className="text-muted">Marks breakdown</small>
-                </div>
-                <div className="text-end">
-                  {(() => {
-                    const total = calcTotal(selectedCourse.marks);
-                    return (
-                      <>
-                        <div className="fs-6 fw-semibold">
-                          {total.obtained} / {total.total}
-                        </div>
-                        <div className="text-muted">{total.pct}%</div>
-                      </>
-                    );
-                  })()}
-                </div>
-              </div>
-
-              <div className="marks-list flex-grow-1">
-                {selectedCourse.marks.map((m, idx) => {
-                  const pct = Math.round((m.score / m.outOf) * 100);
-                  return (
-                    <div key={idx} className="mb-3">
-                      <div className="d-flex justify-content-between">
-                        <div className="fw-medium">{m.title}</div>
-                        <div>
-                          <strong>{m.score}</strong> / {m.outOf}{" "}
-                          <small className="text-muted">({pct}%)</small>
-                        </div>
-                      </div>
-                      <div className="progress mt-2" style={{ height: "8px" }}>
-                        <div
-                          className="progress-bar"
-                          role="progressbar"
-                          style={{ width: `${pct}%` }}
-                          aria-valuenow={pct}
-                          aria-valuemin="0"
-                          aria-valuemax="100"
-                        ></div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile: accordion view (only visible on small screens) */}
-      <div className="d-md-none mt-4">
-        <div className="accordion" id="coursesAccordion">
-          {courses.map((course, i) => {
-            const total = calcTotal(course.marks);
-            return (
-              <div className="accordion-item" key={course.code}>
-                <h2 className="accordion-header" id={`heading-${i}`}>
-                  <button
-                    className={"accordion-button collapsed"}
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target={`#collapse-${i}`}
-                    aria-expanded="false"
-                    aria-controls={`collapse-${i}`}
-                  >
-                    <div className="me-3">
-                      <div className="fw-bold">{course.code}</div>
-                      <small className="text-muted">{course.name}</small>
-                    </div>
-                    <div className="ms-auto text-end">
-                      <div>
-                        {total.obtained} / {total.total}
-                      </div>
-                      <small className="text-muted">{total.pct}%</small>
-                    </div>
-                  </button>
-                </h2>
-                <div
-                  id={`collapse-${i}`}
-                  className="accordion-collapse collapse"
-                  aria-labelledby={`heading-${i}`}
-                  data-bs-parent="#coursesAccordion"
-                >
-                  <div className="accordion-body">
-                    {course.marks.map((m, idx) => {
-                      const pct = Math.round((m.score / m.outOf) * 100);
-                      return (
-                        <div key={idx} className="mb-3">
-                          <div className="d-flex justify-content-between">
-                            <div className="fw-medium">{m.title}</div>
-                            <div>
-                              <strong>{m.score}</strong> / {m.outOf}{" "}
-                              <small className="text-muted">({pct}%)</small>
-                            </div>
-                          </div>
-                          <div
-                            className="progress mt-2"
-                            style={{ height: "8px" }}
+      <div className="space-y-6">
+        {marks.length === 0 ? (
+          <Card>
+            <p className="text-center text-gray-500 py-8">
+              No marks available yet
+            </p>
+          </Card>
+        ) : (
+          marks.map((course, idx) => (
+            <Card key={idx} title={`${course.code} - ${course.name}`}>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Assessment
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Marks Obtained
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Total Marks
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Percentage
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {course.marks && course.marks.length > 0 ? (
+                      course.marks.map((mark, markIdx) => (
+                        <tr key={markIdx}>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                            {mark.title}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                            {mark.score !== null ? mark.score : "-"}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                            {mark.outOf}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span
+                              className={`font-medium ${
+                                mark.score !== null &&
+                                (mark.score / mark.outOf) * 100 >= 60
+                                  ? "text-green-600"
+                                  : "text-red-600"
+                              }`}
+                            >
+                              {mark.score !== null
+                                ? `${Math.round(
+                                    (mark.score / mark.outOf) * 100
+                                  )}%`
+                                : "-"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="4"
+                          className="px-4 py-4 text-center text-gray-500"
+                        >
+                          No marks uploaded yet
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                  {course.marks && course.marks.length > 0 && (
+                    <tfoot className="bg-gray-100 dark:bg-gray-700">
+                      <tr>
+                        <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white">
+                          Total
+                        </td>
+                        <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white">
+                          {course.total_obtained || "-"}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white">
+                          100
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          <span
+                            className={`font-bold ${
+                              course.percentage >= 60
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
                           >
-                            <div
-                              className="progress-bar"
-                              role="progressbar"
-                              style={{ width: `${pct}%` }}
-                              aria-valuenow={pct}
-                              aria-valuemin="0"
-                              aria-valuemax="100"
-                            ></div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                    <div className="d-flex gap-2">
-                      <button className="btn btn-outline-primary btn-sm">
-                        Download Report
-                      </button>
-                      <button className="btn btn-primary btn-sm">
-                        Request Re-evaluation
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                            {course.percentage}% ({course.grade})
+                          </span>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
               </div>
-            );
-          })}
-        </div>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
-}
+};

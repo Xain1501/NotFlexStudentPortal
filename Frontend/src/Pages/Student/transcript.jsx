@@ -1,226 +1,159 @@
-import React, { useEffect, useState } from "react";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "../Student/transcript.css";
-import { getTranscript } from "./api";
+import { useState, useEffect } from "react";
+import { studentAPI } from "../../services/api";
+import { Card, LoadingSpinner } from "../../components/UI";
+import { Award } from "lucide-react";
 
-export default function MarksPage() {
-  const [semester] = useState("Fall");
-  const [year] = useState("2023");
-  const [semesterGPA] = useState(3.8);
-  const [cgpa] = useState(3.7);
-  const [courses] = useState([
-    { no: 1, name: "DB", credits: 3, gpa: 3.5, grade: "A-" },
-    { no: 2, name: "CN", credits: 3, gpa: 4.0, grade: "A" },
-    { no: 3, name: "SDA", credits: 3, gpa: 4.0, grade: "A" },
-  ]);
-  const [transcript, setTranscript] = useState(null);
+export const StudentTranscript = () => {
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState(null);
-
-  // Helper to dynamically import jspdf with fallback
-  const loadJsPDF = async () => {
-    try {
-      // normal import (works when package.json "exports" allows it)
-      const mod = await import("jspdf");
-      return mod;
-    } catch (err1) {
-      console.warn("Import 'jspdf' failed, trying UMD path:", err1);
-      // fallback to UMD build - Vite can often resolve this path
-      try {
-        const mod2 = await import("jspdf/dist/jspdf.umd.min.js");
-        return mod2;
-      } catch (err2) {
-        console.error("Import fallback for jspdf failed:", err2);
-        throw err2;
-      }
-    }
-  };
-
-  const loadAutoTable = async () => {
-    try {
-      return await import("jspdf-autotable");
-    } catch (err) {
-      console.warn("Import 'jspdf-autotable' failed:", err);
-      throw err;
-    }
-  };
-
-  const handleDownloadPDF = async () => {
-    try {
-      // dynamically load libraries (client only)
-      const jspdfModule = await loadJsPDF();
-      const autotableModule = await loadAutoTable();
-
-      // normalize jsPDF constructor export shapes
-      const jsPDFCtor = jspdfModule.jsPDF ?? jspdfModule.default ?? jspdfModule;
-      if (typeof jsPDFCtor !== "function") {
-        console.error("Unexpected jspdf export shape:", jspdfModule);
-        throw new Error("Could not obtain jsPDF constructor.");
-      }
-
-      const autoTable = autotableModule.default ?? autotableModule;
-
-      // create pdf and add content
-      const pdf = new jsPDFCtor("p", "mm", "a4");
-      pdf.setFontSize(18);
-      pdf.text("Transcript", pdf.internal.pageSize.getWidth() / 2, 20, {
-        align: "center",
-      });
-
-      pdf.setFontSize(11);
-      const leftX = 14;
-      let y = 30;
-      pdf.text(`Semester: ${semester} (${year})`, leftX, y);
-      pdf.text(
-        `Semester GPA: ${semesterGPA}`,
-        pdf.internal.pageSize.getWidth() / 2,
-        y,
-        { align: "center" }
-      );
-      pdf.text(`CGPA: ${cgpa}`, pdf.internal.pageSize.getWidth() - 14, y, {
-        align: "right",
-      });
-
-      y += 10;
-
-      const head = [["Course No", "Course Name", "Credit Hours", "GPA"]];
-      const body = courses.map((c) => [
-        String(c.no),
-        c.name,
-        String(c.credits),
-        String(c.gpa),
-      ]);
-
-      if (typeof autoTable === "function") {
-        // call as function autoTable(pdf, opts)
-        autoTable(pdf, {
-          head,
-          body,
-          startY: y,
-          margin: { left: 14, right: 14 },
-          styles: { fontSize: 10 },
-          headStyles: {
-            fillColor: [240, 240, 240],
-            textColor: 20,
-            fontStyle: "bold",
-          },
-        });
-      } else if (typeof pdf.autoTable === "function") {
-        pdf.autoTable({
-          head,
-          body,
-          startY: y,
-          margin: { left: 14, right: 14 },
-          styles: { fontSize: 10 },
-        });
-      } else {
-        // final fallback: draw a simple table
-        let posY = y;
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        pdf.setFontSize(10);
-        pdf.text("Course No", 16, posY);
-        pdf.text("Course Name", 40, posY);
-        pdf.text("Credit Hours", pageWidth - 60, posY);
-        pdf.text("GPA", pageWidth - 30, posY);
-        posY += 8;
-        courses.forEach((c) => {
-          pdf.text(String(c.no), 16, posY);
-          pdf.text(String(c.name), 40, posY);
-          pdf.text(String(c.credits), pageWidth - 60, posY);
-          pdf.text(String(c.gpa), pageWidth - 30, posY);
-          posY += 8;
-          if (posY > pdf.internal.pageSize.getHeight() - 20) {
-            pdf.addPage();
-            posY = 20;
-          }
-        });
-      }
-
-      pdf.save(`transcript-${semester}-${year}.pdf`);
-    } catch (err) {
-      console.error("Download PDF failed:", err);
-      alert("Could not create PDF. Check console for details.");
-    }
-  };
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    let mounted = true;
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await getTranscript();
-        if (mounted) setTranscript(res);
-      } catch (e) {
-        if (mounted) setErr(e.message || String(e));
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      mounted = false;
-    };
+    fetchTranscript();
   }, []);
 
-  if (loading) return <div>Loading transcript...</div>;
-  if (err) return <div>Error: {err}</div>;
+  const fetchTranscript = async () => {
+    try {
+      setLoading(true);
+      const response = await studentAPI.getTranscript();
+      if (response.data.success) {
+        setData(response.data.data);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load transcript");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
+  const semesters = data?.semesters || [];
+  const cgpa = data?.cgpa || 0;
 
   return (
-    <div className="transcript-page my-4">
-      <div className="transcript-header">
-        <button
-          type="button"
-          className="btn btn-primary download-btn"
-          onClick={handleDownloadPDF}
-        >
-          Download
-        </button>
-        <h1 className="transcript-title text-center">Transcript</h1>
+    <div className="p-6 max-w-7xl mx-auto">
+      <div className="flex items-center mb-6">
+        <Award className="h-8 w-8 text-primary-600 mr-3" />
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Academic Transcript
+        </h1>
       </div>
 
-      <div className="transcript-meta d-flex flex-row justify-content-between align-items-center gap-3 mb-3 flex-wrap">
-        <div className="meta-item d-flex text-start align-items-center">
-          <div className="meta-label">Semester:</div>
-          <div className="meta-value">
-            {semester} ({year})
-          </div>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
         </div>
+      )}
 
-        <div className="meta-item d-flex text-center align-items-center">
-          <div className="meta-label">Semester GPA:</div>
-          <div className="meta-value">{semesterGPA}</div>
+      {/* CGPA Card */}
+      <Card className="mb-6">
+        <div className="text-center">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            Cumulative Grade Point Average
+          </p>
+          <p className="text-5xl font-bold text-primary-600">
+            {cgpa.toFixed(2)}
+          </p>
+          <p className="text-sm text-gray-500 mt-2">out of 4.00</p>
         </div>
+      </Card>
 
-        <div className="meta-item d-flex text-end align-items-center">
-          <div className="meta-label">CGPA:</div>
-          <div className="meta-value">{cgpa}</div>
-        </div>
-      </div>
+      {/* Semester Records */}
+      <div className="space-y-6">
+        {semesters.length === 0 ? (
+          <Card>
+            <p className="text-center text-gray-500 py-8">
+              No transcript records available
+            </p>
+          </Card>
+        ) : (
+          semesters.map((semester, idx) => (
+            <Card key={idx} title={semester.semester}>
+              <div className="mb-4">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  Semester GPA:
+                </span>
+                <span className="ml-2 text-xl font-bold text-primary-600">
+                  {(semester.sgpa || 0).toFixed(2)}
+                </span>
+              </div>
 
-      <div className="table-responsive">
-        <table className="table">
-          <thead>
-            <tr>
-              <th scope="col">Course No</th>
-              <th scope="col">Course Name</th>
-              <th scope="col">Credit Hours</th>
-              <th scope="col">GPA</th>
-              <th scope="col">Grade</th>
-            </tr>
-          </thead>
-          <tbody>
-            {courses.map((c) => (
-              <tr key={c.no}>
-                <th scope="row">{c.no}</th>
-                <td>{c.name}</td>
-                <td>{c.credits}</td>
-                <td>{c.gpa}</td>
-                <td>{c.grade}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              <div className="overflow-x-auto">
+                <table className="min-w-full">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Course Code
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Course Name
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Credits
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Grade
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">
+                        Grade Points
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {semester.courses && semester.courses.length > 0 ? (
+                      semester.courses.map((course, courseIdx) => (
+                        <tr key={courseIdx}>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                            {course.course_code}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                            {course.course_name}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                            {course.credits}
+                          </td>
+                          <td className="px-4 py-3 text-sm">
+                            <span
+                              className={`font-medium ${
+                                ["A", "B"].includes(course.final_grade)
+                                  ? "text-green-600"
+                                  : ["C", "D"].includes(course.final_grade)
+                                  ? "text-yellow-600"
+                                  : "text-red-600"
+                              }`}
+                            >
+                              {course.final_grade || "N/A"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                            {course.grade_points || 0}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="px-4 py-4 text-center text-gray-500"
+                        >
+                          No courses recorded
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
-}
+};

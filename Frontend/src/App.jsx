@@ -1,158 +1,136 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { isAuthenticated, getCurrentUser } from "./api/client";
-import "./App.css";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { Navbar } from "./components/Navbar";
+import { Login } from "./pages/Login";
+import { Register } from "./pages/Register";
 
+// Student Pages
+import { StudentDashboard } from "./pages/Student/Dashboard";
+import { StudentCourses } from "./pages/Student/Courses";
+import { StudentMarks } from "./pages/Student/Marks";
+import { StudentAttendance } from "./pages/Student/Attendance";
+import { StudentFees } from "./pages/Student/Fees";
+import { StudentTranscript } from "./pages/Student/Transcript";
 
-// Student pages
-import Login from "./Pages/Shared/login.jsx";
-import StudentHome from "./Pages/Student/home.jsx";
-import Transcript from "./Pages/Student/transcript.jsx";
-import StudentMarks from "./Pages/Student/marks.jsx";
-import StudentAttendance from "./Pages/Student/attendance.jsx";
-import Timetable from "./Pages/Student/timetable.jsx";
-import FeeDetail from "./Pages/Student/feedetail.jsx";
-import CourseRegistration from "./Pages/Student/courseregistration.jsx";
+// Faculty Pages
+import { FacultyDashboard } from "./pages/Faculty/Dashboard";
+import { FacultyAttendance } from "./pages/Faculty/Attendance";
+import { FacultyGrades } from "./pages/Faculty/Grades";
+import { FacultyAnnouncements } from "./pages/Faculty/Announcements";
+import { FacultyLeaves } from "./pages/Faculty/Leaves";
 
-// Faculty pages
-import TeacherHome from "./Pages/Faculty/home.jsx";
-import MarkAttendance from "./Pages/Faculty/attendance.jsx";
-import Leave from "./Pages/Faculty/leaveapplication.jsx";
-import UpdateMarks from "./Pages/Faculty/marks.jsx";
-import FacultyTimetable from "./Pages/Faculty/timetable.jsx";
+// Admin Pages
+import { AdminDashboard } from "./pages/Admin/Dashboard";
+import { AdminStudents } from "./pages/Admin/Students";
+import { AdminFaculty } from "./pages/Admin/Faculty";
+import { AdminFees } from "./pages/Admin/Fees";
+import { AdminLeaves } from "./pages/Admin/Leaves";
+import { AdminAnnouncements } from "./pages/Admin/Announcements";
 
-// Admin pages
-import AdminHome from "./Pages/Admin/adminhome.jsx";
-import ApproveLeave from "./Pages/Admin/leave.jsx";
-import CourseManagement from "./Pages/Admin/coursemangement.jsx";
-import FeeStructure from "./Pages/Admin/feemanagement.jsx";
-import ManageStudent from "./Pages/Admin/managestudent.jsx";
-import ManageFaculty from "./Pages/Admin/managefaculty.jsx";
-import ManageDepartments from "./Pages/Admin/managedepartment.jsx";
-import FacultyAttendance from "./Pages/Admin/facultyattendance.jsx";
-
-// Layouts
-import StudentLayout from "./Layout/studentlayout.jsx";
-import FacultyLayout from "./Layout/facultylayout.jsx";
-import AdminLayout from "./Layout/adminlayout.jsx";
-
-// Protected Route Component
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const user = getCurrentUser();
-
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  return children;
-};
-
-// Public Route Component (redirect to dashboard if already logged in)
-const PublicRoute = ({ children }) => {
-  if (isAuthenticated()) {
-    const user = getCurrentUser();
-    switch (user.role) {
-      case "admin":
-        return <Navigate to="/admin" replace />;
-      case "student":
-        return <Navigate to="/student" replace />;
-      case "faculty":
-        return <Navigate to="/faculty" replace />;
-      default:
-        return <Navigate to="/" replace />;
-    }
-  }
-  return children;
-};
-
-export default function App() {
+function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route
-        path="/login"
-        element={
-          <PublicRoute>
-            <Login />
-          </PublicRoute>
-        }
-      />
+    <AuthProvider>
+      <BrowserRouter>
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-      {/* Default route redirects to login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Student Routes */}
+            <Route
+              path="/student/*"
+              element={
+                <ProtectedRoute allowedRoles={["student"]}>
+                  <>
+                    <Navbar />
+                    <Routes>
+                      <Route path="dashboard" element={<StudentDashboard />} />
+                      <Route path="courses" element={<StudentCourses />} />
+                      <Route path="marks" element={<StudentMarks />} />
+                      <Route
+                        path="attendance"
+                        element={<StudentAttendance />}
+                      />
+                      <Route path="fees" element={<StudentFees />} />
+                      <Route
+                        path="transcript"
+                        element={<StudentTranscript />}
+                      />
+                      <Route
+                        path="*"
+                        element={<Navigate to="/student/dashboard" replace />}
+                      />
+                    </Routes>
+                  </>
+                </ProtectedRoute>
+              }
+            />
 
-      {/* Student Routes */}
-      <Route
-        path="/student"
-        element={
-          <ProtectedRoute allowedRoles={["student"]}>
-            <StudentLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<StudentHome />} />
-        <Route path="transcript" element={<Transcript />} />
-        <Route path="marks" element={<StudentMarks />} />
-        <Route path="attendance" element={<StudentAttendance />} />
-        <Route path="timetable" element={<Timetable />} />
-        <Route path="fees" element={<FeeDetail />} />
-        <Route path="course-registration" element={<CourseRegistration />} />
-      </Route>
+            {/* Faculty Routes */}
+            <Route
+              path="/faculty/*"
+              element={
+                <ProtectedRoute allowedRoles={["faculty"]}>
+                  <>
+                    <Navbar />
+                    <Routes>
+                      <Route path="dashboard" element={<FacultyDashboard />} />
+                      <Route
+                        path="attendance"
+                        element={<FacultyAttendance />}
+                      />
+                      <Route path="grades" element={<FacultyGrades />} />
+                      <Route
+                        path="announcements"
+                        element={<FacultyAnnouncements />}
+                      />
+                      <Route path="leaves" element={<FacultyLeaves />} />
+                      <Route
+                        path="*"
+                        element={<Navigate to="/faculty/dashboard" replace />}
+                      />
+                    </Routes>
+                  </>
+                </ProtectedRoute>
+              }
+            />
 
-      {/* Faculty Routes */}
-      <Route
-        path="/faculty"
-        element={
-          <ProtectedRoute allowedRoles={["faculty"]}>
-            <FacultyLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<TeacherHome />} />
-        <Route path="attendance" element={<MarkAttendance />} />
-        <Route path="leave" element={<Leave />} />
-        <Route path="marks" element={<UpdateMarks />} />
-        <Route path="timetable" element={<FacultyTimetable />} />
-      </Route>
+            {/* Admin Routes */}
+            <Route
+              path="/admin/*"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <>
+                    <Navbar />
+                    <Routes>
+                      <Route path="dashboard" element={<AdminDashboard />} />
+                      <Route path="students" element={<AdminStudents />} />
+                      <Route path="faculty" element={<AdminFaculty />} />
+                      <Route path="fees" element={<AdminFees />} />
+                      <Route path="leaves" element={<AdminLeaves />} />
+                      <Route
+                        path="announcements"
+                        element={<AdminAnnouncements />}
+                      />
+                      <Route
+                        path="*"
+                        element={<Navigate to="/admin/dashboard" replace />}
+                      />
+                    </Routes>
+                  </>
+                </ProtectedRoute>
+              }
+            />
 
-      {/* Admin Routes */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute allowedRoles={["admin"]}>
-            <AdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<AdminHome />} />
-        <Route path="leaves" element={<ApproveLeave />} />
-        <Route path="courses" element={<CourseManagement />} />
-        <Route path="fees" element={<FeeStructure />} />
-        <Route path="students" element={<ManageStudent />} />
-        <Route path="faculty" element={<ManageFaculty />} />
-        <Route path="departments" element={<ManageDepartments />} />
-        <Route path="faculty-attendance" element={<FacultyAttendance />} />
-      </Route>
-
-      {/* Unauthorized Page */}
-      <Route
-        path="/unauthorized"
-        element={
-          <div className="text-center py-5">
-            <h1>Unauthorized</h1>
-            <p>You don't have permission to access this page.</p>
-          </div>
-        }
-      />
-
-      {/* 404 fallback */}
-      <Route
-        path="*"
-        element={<div className="text-center py-5">Page not found</div>}
-      />
-    </Routes>
+            {/* Default Route */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
+
+export default App;

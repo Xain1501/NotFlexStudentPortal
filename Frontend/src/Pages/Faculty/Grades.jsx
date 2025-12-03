@@ -1,16 +1,14 @@
 import { useState, useEffect } from "react";
 import { facultyAPI } from "../../services/api";
 import { Card, LoadingSpinner, Modal } from "../../components/UI";
-import { ClipboardCheck, Search } from "lucide-react";
+import { Award, Upload } from "lucide-react";
 
-export const FacultyAttendance = () => {
+export const FacultyGrades = () => {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [students, setStudents] = useState([]);
-  const [attendanceDate, setAttendanceDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [attendanceRecords, setAttendanceRecords] = useState({});
+  const [examType, setExamType] = useState("midterm");
+  const [marks, setMarks] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -41,49 +39,53 @@ export const FacultyAttendance = () => {
       if (response.data.success) {
         const studentList = response.data.data.students || [];
         setStudents(studentList);
-        // Initialize all as present
-        const records = {};
+        // Initialize marks
+        const initialMarks = {};
         studentList.forEach((s) => {
-          records[s.student_id] = "present";
+          initialMarks[s.student_id] = "";
         });
-        setAttendanceRecords(records);
+        setMarks(initialMarks);
       }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to load students");
     }
   };
 
-  const handleToggleAttendance = (studentId) => {
-    setAttendanceRecords({
-      ...attendanceRecords,
-      [studentId]:
-        attendanceRecords[studentId] === "present" ? "absent" : "present",
+  const handleMarkChange = (studentId, value) => {
+    setMarks({
+      ...marks,
+      [studentId]: value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const attendanceData = Object.entries(attendanceRecords).map(
-        ([student_id, status]) => ({
+      const marksData = Object.entries(marks)
+        .filter(([_, mark]) => mark !== "")
+        .map(([student_id, mark]) => ({
           student_id: parseInt(student_id),
-          status,
-        })
-      );
+          marks: parseFloat(mark),
+          exam_type: examType,
+        }));
 
-      const response = await facultyAPI.markAttendance({
+      if (marksData.length === 0) {
+        alert("Please enter at least one mark");
+        return;
+      }
+
+      const response = await facultyAPI.uploadMarks({
         section_id: selectedCourse.section_id,
-        date: attendanceDate,
-        attendance: attendanceData,
+        marks: marksData,
       });
 
       if (response.data.success) {
-        alert("Attendance marked successfully");
+        alert("Marks uploaded successfully");
         setShowModal(false);
         setSelectedCourse(null);
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to mark attendance");
+      alert(err.response?.data?.message || "Failed to upload marks");
     }
   };
 
@@ -98,9 +100,9 @@ export const FacultyAttendance = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center mb-6">
-        <ClipboardCheck className="h-8 w-8 text-primary-600 mr-3" />
+        <Award className="h-8 w-8 text-primary-600 mr-3" />
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Mark Attendance
+          Upload Grades
         </h1>
       </div>
 
@@ -131,26 +133,30 @@ export const FacultyAttendance = () => {
         </div>
       </Card>
 
-      {/* Attendance Marking Modal */}
+      {/* Marks Upload Modal */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         title={
           selectedCourse
             ? `${selectedCourse.course_name} - Section ${selectedCourse.section_number}`
-            : "Mark Attendance"
+            : "Upload Marks"
         }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="label">Attendance Date</label>
-            <input
-              type="date"
+            <label className="label">Exam Type</label>
+            <select
               className="input"
-              value={attendanceDate}
-              onChange={(e) => setAttendanceDate(e.target.value)}
+              value={examType}
+              onChange={(e) => setExamType(e.target.value)}
               required
-            />
+            >
+              <option value="midterm">Midterm</option>
+              <option value="final">Final</option>
+              <option value="quiz">Quiz</option>
+              <option value="assignment">Assignment</option>
+            </select>
           </div>
 
           <div className="max-h-96 overflow-y-auto">
@@ -164,7 +170,7 @@ export const FacultyAttendance = () => {
                     Name
                   </th>
                   <th className="px-4 py-2 text-center text-sm font-medium text-gray-700">
-                    Status
+                    Marks
                   </th>
                 </tr>
               </thead>
@@ -178,21 +184,18 @@ export const FacultyAttendance = () => {
                       {student.first_name} {student.last_name}
                     </td>
                     <td className="px-4 py-2 text-center">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleToggleAttendance(student.student_id)
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        className="input text-center w-24"
+                        value={marks[student.student_id] || ""}
+                        onChange={(e) =>
+                          handleMarkChange(student.student_id, e.target.value)
                         }
-                        className={`px-4 py-1 rounded text-sm font-medium ${
-                          attendanceRecords[student.student_id] === "present"
-                            ? "bg-green-100 text-green-800 hover:bg-green-200"
-                            : "bg-red-100 text-red-800 hover:bg-red-200"
-                        }`}
-                      >
-                        {attendanceRecords[student.student_id] === "present"
-                          ? "Present"
-                          : "Absent"}
-                      </button>
+                        placeholder="0-100"
+                      />
                     </td>
                   </tr>
                 ))}
@@ -200,27 +203,18 @@ export const FacultyAttendance = () => {
             </table>
           </div>
 
-          <div className="flex justify-between items-center pt-4 border-t">
-            <div className="text-sm text-gray-600">
-              Present:{" "}
-              {
-                Object.values(attendanceRecords).filter((s) => s === "present")
-                  .length
-              }{" "}
-              / {students.length}
-            </div>
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="btn btn-secondary"
-              >
-                Cancel
-              </button>
-              <button type="submit" className="btn btn-primary">
-                Submit Attendance
-              </button>
-            </div>
+          <div className="flex justify-end space-x-3 pt-4 border-t">
+            <button
+              type="button"
+              onClick={() => setShowModal(false)}
+              className="btn btn-secondary"
+            >
+              Cancel
+            </button>
+            <button type="submit" className="btn btn-primary flex items-center">
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Marks
+            </button>
           </div>
         </form>
       </Modal>

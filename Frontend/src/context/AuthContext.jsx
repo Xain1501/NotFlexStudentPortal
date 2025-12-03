@@ -1,40 +1,90 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from "react";
+import { authAPI } from "../services/api";
 
-// Simple AuthContext to demo role-based navbars. Replace with real auth.
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children }) {
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+  return context;
+};
+
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Try to restore saved user or default to student
-    const saved = localStorage.getItem('user');
-    if (saved) {
-      setUser(JSON.parse(saved));
-    } else {
-      setUser({ username: 'demo', role: 'student' }); // default
+    // Check if user is logged in on mount
+    const token = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
+    if (token && savedUser) {
+      setUser(JSON.parse(savedUser));
     }
+    setLoading(false);
   }, []);
 
-  function loginAsFaculty() {
-    const u = { username: 'teacher', role: 'faculty' };
-    setUser(u);
-    localStorage.setItem('user', JSON.stringify(u));
-  }
+  const login = async (username, password) => {
+    try {
+      const response = await authAPI.login(username, password);
+      if (response.data.success) {
+        const { token, user } = response.data.data;
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        setUser(user);
+        return { success: true, user };
+      }
+      return { success: false, message: response.data.message };
+    } catch (error) {
+      console.error("Login error:", error);
+      return {
+        success: false,
+        message:
+          error.response?.data?.message || "Login failed. Please try again.",
+      };
+    }
+  };
 
-  function loginAsStudent() {
-    const u = { username: 'student', role: 'student' };
-    setUser(u);
-    localStorage.setItem('user', JSON.stringify(u));
-  }
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      setUser(null);
+    }
+  };
 
-  return (
-    <AuthContext.Provider value={{ user, setUser, loginAsFaculty, loginAsStudent }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
+  const register = async (userData) => {
+    try {
+      const response = await authAPI.register(userData);
+      if (response.data.success) {
+        return { success: true, message: response.data.message };
+      }
+      return { success: false, message: response.data.message };
+    } catch (error) {
+      return {
+        success: false,
+        message: error.response?.data?.message || "Registration failed.",
+      };
+    }
+  };
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+  const value = {
+    user,
+    loading,
+    login,
+    logout,
+    register,
+    isAuthenticated: !!user,
+    isStudent: user?.role === "student",
+    isFaculty: user?.role === "faculty",
+    isAdmin: user?.role === "admin",
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
