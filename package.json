@@ -1,4 +1,20 @@
 {
+  "name": "notflex-student-portal",
+  "version": "1.0.0",
+  "description": "Student Portal Management System",
+  "scripts": {
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd \"Backend 1\" && pip install -r requirements.txt",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "setup:db": "cd \"Backend 1\" && python app/setup_database.py --fresh",
+    "setup:db:fix": "cd \"Backend 1\" && python app/setup_database.py --fix",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd \"Backend 1\" && python main.py",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" --names \"BACKEND,FRONTEND\" --prefix-colors \"bgBlue.bold,bgMagenta.bold\"",
+    "start": "npm run dev",
+    "setup": "npm run install:all && npm run setup:db",
+    "setup:quick": "npm run install:all && npm run setup:db:fix"
+  },
   "dependencies": {
     "axios": "^1.13.2",
     "i": "^0.3.7",
@@ -7,6 +23,7 @@
     "react-router-dom": "^7.9.4"
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "html2canvas": "^1.4.1"
   }
 }

@@ -1,6 +1,44 @@
 # 🎓 NotFlex Student Portal + React Frontend
 
-This repository contains the **NotFlex Student Portal** system with a **React + Vite** frontend.
+## ⚡ Quick Start - Run Everything with One Command!
+
+### First Time Setup (New Users/GitHub Clone)
+
+```bash
+npm run setup
+```
+
+This installs all dependencies and creates the database with sample data!
+
+### Run Frontend + Backend Together
+
+```bash
+npm run dev
+```
+
+- 🟦 **Backend:** `http://localhost:5000`
+- 🟪 **Frontend:** `http://localhost:5173`
+
+### Default Login
+
+- **Admin:** `admin` / `password123`
+- **Faculty:** `24f-001` / `password123`
+- **Student:** `24k-001` / `password123`
+
+---
+
+## 📋 All Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run setup` | Install all deps + create fresh database |
+| `npm run setup:quick` | Install all deps + fix existing database |
+| `npm run dev` / `npm start` | Run frontend + backend together |
+| `npm run dev:frontend` | Run frontend only |
+| `npm run dev:backend` | Run backend only |
+| `npm run install:all` | Install all dependencies |
+| `npm run setup:db` | Create fresh database |
+| `npm run setup:db:fix` | Fix existing database (keeps data) |
 
 ---
 
@@ -30,8 +68,6 @@ This system manages students, faculty, departments, courses, enrollments, grades
 | **Tasbiha Nasir** | Full Stack Developer | [@TasbihaNasir](https://github.com/TasbihaNasir) |
 
 ---
-
-*(Keep the rest of the NotFlex content as is — features, modules, database architecture, etc.)*
 
 ## 🧩 System Overview
 

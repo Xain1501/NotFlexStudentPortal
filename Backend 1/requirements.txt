@@ -5,3 +5,4 @@ PyMySQL
 Flask-SQLAlchemy
 Flask-RESTful
 passlib[bcrypt]
+PyJWT
