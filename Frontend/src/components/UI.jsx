@@ -3,9 +3,7 @@ export const Card = ({ children, className = "", title, action }) => {
     <div className={`card ${className}`}>
       {title && (
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {title}
-          </h3>
+          <h3 className="text-xl font-semibold text-white">{title}</h3>
           {action}
         </div>
       )}
@@ -16,20 +14,18 @@ export const Card = ({ children, className = "", title, action }) => {
 
 export const StatCard = ({ title, value, icon: Icon, color = "primary" }) => {
   const colorClasses = {
-    primary: "bg-primary-100 text-primary-600",
-    success: "bg-green-100 text-green-600",
-    warning: "bg-yellow-100 text-yellow-600",
-    danger: "bg-red-100 text-red-600",
+    primary: "bg-primary-500/20 text-primary-400 border border-primary-500/30",
+    success: "bg-green-500/20 text-green-400 border border-green-500/30",
+    warning: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
+    danger: "bg-red-500/20 text-red-400 border border-red-500/30",
   };
 
   return (
-    <div className="card">
+    <div className="card hover:border-primary-500/50 transition-all cursor-pointer">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{title}</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white mt-2">
-            {value}
-          </p>
+          <p className="text-sm text-dark-300 font-medium">{title}</p>
+          <p className="text-3xl font-bold text-white mt-2">{value}</p>
         </div>
         {Icon && (
           <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
@@ -43,35 +39,35 @@ export const StatCard = ({ title, value, icon: Icon, color = "primary" }) => {
 
 export const Table = ({ columns, data, onRowClick }) => {
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-700">
+    <div className="overflow-x-auto rounded-lg border border-dark-700">
+      <table className="min-w-full divide-y divide-dark-700">
+        <thead className="bg-dark-900">
           <tr>
             {columns.map((column, idx) => (
               <th
                 key={idx}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                className="px-6 py-3 text-left text-xs font-semibold text-dark-200 uppercase tracking-wider"
               >
                 {column.header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+        <tbody className="bg-dark-800 divide-y divide-dark-700">
           {data.map((row, rowIdx) => (
             <tr
               key={rowIdx}
               onClick={() => onRowClick && onRowClick(row)}
               className={
                 onRowClick
-                  ? "hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                  : ""
+                  ? "hover:bg-dark-700 cursor-pointer transition-colors"
+                  : "hover:bg-dark-700/50 transition-colors"
               }
             >
               {columns.map((column, colIdx) => (
                 <td
                   key={colIdx}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100"
+                  className="px-6 py-4 whitespace-nowrap text-sm text-dark-100"
                 >
                   {column.accessor ? column.accessor(row) : row[column.key]}
                 </td>
@@ -81,9 +77,7 @@ export const Table = ({ columns, data, onRowClick }) => {
         </tbody>
       </table>
       {data.length === 0 && (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          No data available
-        </div>
+        <div className="text-center py-8 text-dark-400">No data available</div>
       )}
     </div>
   );
@@ -91,16 +85,17 @@ export const Table = ({ columns, data, onRowClick }) => {
 
 export const Badge = ({ children, variant = "default" }) => {
   const variants = {
-    default: "bg-gray-100 text-gray-800",
-    success: "bg-green-100 text-green-800",
-    warning: "bg-yellow-100 text-yellow-800",
-    danger: "bg-red-100 text-red-800",
-    primary: "bg-primary-100 text-primary-800",
+    default: "bg-dark-700 text-dark-200 border border-dark-600",
+    success: "bg-green-500/20 text-green-400 border border-green-500/30",
+    warning: "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30",
+    danger: "bg-red-500/20 text-red-400 border border-red-500/30",
+    primary: "bg-primary-500/20 text-primary-400 border border-primary-500/30",
+    info: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
   };
 
   return (
     <span
-      className={`px-2 py-1 text-xs font-medium rounded-full ${variants[variant]}`}
+      className={`px-2.5 py-1 text-xs font-semibold rounded-full ${variants[variant]}`}
     >
       {children}
     </span>
@@ -114,13 +109,13 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
         <div
-          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75"
+          className="fixed inset-0 transition-opacity bg-black bg-opacity-75 backdrop-blur-sm"
           onClick={onClose}
         ></div>
 
-        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-          <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-            <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-white mb-4">
+        <div className="inline-block align-bottom bg-dark-800 border border-dark-700 rounded-xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+          <div className="px-6 pt-6 pb-6">
+            <h3 className="text-lg font-bold leading-6 text-white mb-4 border-b border-dark-700 pb-3">
               {title}
             </h3>
             {children}
@@ -141,7 +136,7 @@ export const LoadingSpinner = ({ size = "md" }) => {
   return (
     <div className="flex justify-center items-center">
       <div
-        className={`animate-spin rounded-full border-b-2 border-primary-600 ${sizes[size]}`}
+        className={`animate-spin rounded-full border-b-2 border-primary-500 ${sizes[size]}`}
       ></div>
     </div>
   );

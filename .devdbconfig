@@ -1,0 +1,8 @@
+{
+  "host": "localhost",
+  "port": 3307,
+  "user": "root",
+  "password": "zain",
+  "database": "student_portal",
+  "driver": "mysql"
+}

@@ -24,6 +24,7 @@ import { FacultyLeaves } from "./pages/Faculty/Leaves";
 import { AdminDashboard } from "./pages/Admin/Dashboard";
 import { AdminStudents } from "./pages/Admin/Students";
 import { AdminFaculty } from "./pages/Admin/Faculty";
+import { AdminCourses } from "./pages/Admin/Courses";
 import { AdminFees } from "./pages/Admin/Fees";
 import { AdminLeaves } from "./pages/Admin/Leaves";
 import { AdminAnnouncements } from "./pages/Admin/Announcements";
@@ -32,7 +33,7 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
+        <div className="min-h-screen bg-gradient-dark">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

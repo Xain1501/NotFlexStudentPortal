@@ -41,6 +41,7 @@ export const Navbar = () => {
         { name: "Dashboard", path: `${baseLink}/dashboard` },
         { name: "Students", path: `${baseLink}/students` },
         { name: "Faculty", path: `${baseLink}/faculty` },
+        { name: "Courses", path: `${baseLink}/courses` },
         { name: "Fees", path: `${baseLink}/fees` },
         { name: "Leaves", path: `${baseLink}/leaves` },
         { name: "Announcements", path: `${baseLink}/announcements` },
@@ -52,26 +53,26 @@ export const Navbar = () => {
   const navLinks = getNavLinks();
 
   return (
-    <nav className="bg-white dark:bg-gray-800 shadow-lg">
+    <nav className="bg-dark-900 border-b border-dark-700 shadow-2xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <span className="text-2xl font-bold text-primary-600">
+              <span className="text-2xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
                 Student Portal
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:ml-10 md:flex md:space-x-4">
+            <div className="hidden md:ml-10 md:flex md:space-x-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     location.pathname === link.path
-                      ? "bg-primary-100 text-primary-700"
-                      : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                      ? "bg-primary-500/20 text-primary-400 border border-primary-500/30"
+                      : "text-dark-200 hover:bg-dark-800 hover:text-white"
                   }`}
                 >
                   {link.name}
@@ -83,10 +84,10 @@ export const Navbar = () => {
           {/* Right side */}
           <div className="flex items-center">
             <div className="hidden md:flex md:items-center md:space-x-4">
-              <div className="flex items-center text-sm text-gray-700 dark:text-gray-300">
-                <User className="h-5 w-5 mr-2" />
-                <span className="font-medium">{user?.username}</span>
-                <span className="ml-2 px-2 py-1 text-xs rounded-full bg-primary-100 text-primary-800">
+              <div className="flex items-center text-sm text-dark-200">
+                <User className="h-5 w-5 mr-2 text-primary-400" />
+                <span className="font-medium text-white">{user?.username}</span>
+                <span className="ml-2 px-2.5 py-1 text-xs rounded-full bg-primary-500/20 text-primary-400 border border-primary-500/30 font-semibold">
                   {user?.role}
                 </span>
               </div>
@@ -103,7 +104,7 @@ export const Navbar = () => {
             <div className="md:hidden">
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-md text-gray-700 dark:text-gray-300"
+                className="p-2 rounded-md text-dark-200 hover:text-white hover:bg-dark-800"
               >
                 {mobileMenuOpen ? (
                   <X className="h-6 w-6" />
@@ -118,29 +119,30 @@ export const Navbar = () => {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-700">
+        <div className="md:hidden border-t border-dark-700 bg-dark-900">
           <div className="px-2 pt-2 pb-3 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block px-3 py-2 rounded-md text-base font-medium ${
+                className={`block px-3 py-2 rounded-lg text-base font-medium ${
                   location.pathname === link.path
-                    ? "bg-primary-100 text-primary-700"
-                    : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                    ? "bg-primary-500/20 text-primary-400 border border-primary-500/30"
+                    : "text-dark-200 hover:bg-dark-800 hover:text-white"
                 }`}
               >
                 {link.name}
               </Link>
             ))}
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <div className="px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
-                Logged in as <strong>{user?.username}</strong>
+            <div className="pt-4 border-t border-dark-700">
+              <div className="px-3 py-2 text-sm text-dark-200">
+                Logged in as{" "}
+                <strong className="text-white">{user?.username}</strong>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-3 py-2 text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-md"
+                className="w-full text-left px-3 py-2 text-base font-medium text-red-400 hover:bg-red-500/10 rounded-lg"
               >
                 Logout
               </button>

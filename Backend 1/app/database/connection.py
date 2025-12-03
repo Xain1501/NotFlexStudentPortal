@@ -7,7 +7,7 @@ from contextlib import contextmanager
 DB_CONFIG = {
     'host': os.getenv('DB_HOST', 'localhost'),
     'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'muzukashi1234@'),
+    'password': os.getenv('DB_PASSWORD', 'zain'),
     'database': os.getenv('DB_NAME', 'student_portal'),
     'port': int(os.getenv('DB_PORT', 3307)),
     'charset': 'utf8mb4',

@@ -223,51 +223,52 @@ CREATE TABLE IF NOT EXISTS admin_info (
 
 
 
+-- Students foreign keys
 ALTER TABLE students ADD FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
-ALTER TABLE students ADD FOREIGN KEY (major_dept_id) REFERENCES departments(dept_id);
-
+ALTER TABLE students ADD FOREIGN KEY (major_dept_id) REFERENCES departments(dept_id) ON DELETE SET NULL;
 
 -- Faculty foreign keys  
 ALTER TABLE faculty ADD FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
-ALTER TABLE faculty ADD FOREIGN KEY (department_id) REFERENCES departments(dept_id);
--- do not add section_id FK on faculty (sections reference faculty instead)
+ALTER TABLE faculty ADD FOREIGN KEY (department_id) REFERENCES departments(dept_id) ON DELETE SET NULL;
 
+-- Courses foreign keys
+ALTER TABLE courses ADD FOREIGN KEY (department_id) REFERENCES departments(dept_id) ON DELETE SET NULL;
 
 -- Course sections foreign keys
-ALTER TABLE course_sections ADD FOREIGN KEY (course_id) REFERENCES courses(course_id);
-ALTER TABLE course_sections ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id);
+ALTER TABLE course_sections ADD FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE;
+ALTER TABLE course_sections ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id) ON DELETE CASCADE;
 -- course_sections should not have student_id FK (enrollments link students to sections)
 
 -- Enrollments foreign keys
-ALTER TABLE enrollments ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
-ALTER TABLE enrollments ADD FOREIGN KEY (section_id) REFERENCES course_sections(section_id);
+ALTER TABLE enrollments ADD FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE;
+ALTER TABLE enrollments ADD FOREIGN KEY (section_id) REFERENCES course_sections(section_id) ON DELETE CASCADE;
 
 -- Marks foreign keys
-ALTER TABLE marks ADD FOREIGN KEY (enrollment_id) REFERENCES enrollments(enrollment_id);
+ALTER TABLE marks ADD FOREIGN KEY (enrollment_id) REFERENCES enrollments(enrollment_id) ON DELETE CASCADE;
 
 -- Attendance foreign keys
-ALTER TABLE attendance ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
-ALTER TABLE attendance ADD FOREIGN KEY (section_id) REFERENCES course_sections(section_id);
+ALTER TABLE attendance ADD FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE;
+ALTER TABLE attendance ADD FOREIGN KEY (section_id) REFERENCES course_sections(section_id) ON DELETE CASCADE;
 
 -- Transcript foreign keys
-ALTER TABLE transcript ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
+ALTER TABLE transcript ADD FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE;
 
 -- Fee details foreign keys
-ALTER TABLE fee_details ADD FOREIGN KEY (student_id) REFERENCES students(student_id);
+ALTER TABLE fee_details ADD FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE;
 
 -- Faculty leaves foreign keys
-ALTER TABLE faculty_leaves ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id);
+ALTER TABLE faculty_leaves ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id) ON DELETE CASCADE;
 
 -- faculry Announcements foreign keys
 ALTER TABLE announcements ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id) ON DELETE CASCADE;
 ALTER TABLE announcements ADD FOREIGN KEY (section_id) REFERENCES course_sections(section_id) ON DELETE CASCADE;
 
 --faculty attendance foriegn keys
-ALTER TABLE faculty_attendance ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id);
-ALTER TABLE faculty_attendance ADD FOREIGN KEY (marked_by) REFERENCES users(user_id);
+ALTER TABLE faculty_attendance ADD FOREIGN KEY (faculty_id) REFERENCES faculty(faculty_id) ON DELETE CASCADE;
+ALTER TABLE faculty_attendance ADD FOREIGN KEY (marked_by) REFERENCES users(user_id) ON DELETE CASCADE;
 
 --admin announcements foreign keys
-ALTER TABLE admin_announcements ADD FOREIGN KEY (created_by) REFERENCES users(user_id);
+ALTER TABLE admin_announcements ADD FOREIGN KEY (created_by) REFERENCES users(user_id) ON DELETE CASCADE;
 
 
 -- ==================== VIEW FOR CALCULATED GRADES ====================

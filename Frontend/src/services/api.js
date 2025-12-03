@@ -128,6 +128,7 @@ export const adminAPI = {
   getDepartments: () => api.get("/api/admin/departments"),
 
   // Courses
+  getCourses: () => api.get("/api/admin/courses"),
   getAllCourseSections: () => api.get("/api/admin/course_sections"),
   createCourse: (data) => api.post("/api/admin/courses", data),
   createCourseSection: (data) => api.post("/api/admin/course_sections", data),

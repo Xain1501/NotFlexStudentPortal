@@ -37,25 +37,25 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-500 to-primary-700 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-dark py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-lg shadow-2xl p-8">
+        <div className="bg-dark-800 border border-dark-700 rounded-xl shadow-2xl p-8">
           <div className="text-center">
-            <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary-100">
-              <LogIn className="h-6 w-6 text-primary-600" />
+            <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-full bg-primary-500/20 border border-primary-500/30">
+              <LogIn className="h-8 w-8 text-primary-400" />
             </div>
-            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            <h2 className="mt-6 text-3xl font-extrabold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
               Student Portal
             </h2>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-dark-300">
               Sign in to your account
             </p>
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <p className="text-sm text-red-800">{error}</p>
+              <div className="rounded-lg bg-red-500/10 border border-red-500/30 p-4">
+                <p className="text-sm text-red-400">{error}</p>
               </div>
             )}
 
@@ -114,11 +114,11 @@ export const Login = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-dark-300">
               Don't have an account?{" "}
               <Link
                 to="/register"
-                className="font-medium text-primary-600 hover:text-primary-500"
+                className="font-semibold text-primary-400 hover:text-primary-300 transition-colors"
               >
                 Register here
               </Link>
